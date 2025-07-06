@@ -65,16 +65,21 @@ export function ParentManagement() {
         else if (found.name.includes('어머니')) role = 'mother';
         else if (found.name.includes('아버지')) role = 'father';
         
-        console.log('Found member:', found);
-        console.log('Mapped role:', role);
-        console.log('Member name:', found.name);
+        // 질문 기록에서 해당 부모님의 답변 수 계산
+        const questionRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]');
+        const parentAnswers = questionRecords.filter((record: any) => record.parentId === parentId);
         
         setParentData(prev => ({
           ...prev,
           id: found.id,
           name: found.name,
           role,
-          avatar: found.avatar
+          avatar: found.avatar,
+          completedQuestions: parentAnswers.length,
+          totalQuestions: parentAnswers.length,
+          lastRecordDate: parentAnswers.length > 0 ? parentAnswers[0].date : '아직 없음',
+          recentQuestion: parentAnswers.length > 0 ? parentAnswers[0].question : '아직 질문한 적이 없어요',
+          recentAnswer: parentAnswers.length > 0 ? parentAnswers[0].answer : '답변을 기다리고 있어요'
         }));
       }
     }
@@ -97,29 +102,27 @@ export function ParentManagement() {
     }
   };
 
-
-
   const getTipMessage = () => {
     const roleTips = {
       mother: [
-        '어머님이 좋아하는 음식은 아직 모르시네요! 질문 드려보세요 :)',
-        '어머님이 좋아하는 색깔에 대해 더 알아보고 싶으시다면 질문해보세요!',
-        '어머님이 즐겨 보셨던 영화가 있다면요? 질문해보세요!'
+        '어머님이 좋아하는 음식은 알고 계신가요? 더 답변해보세요!',
+        '어머님이 좋아하는 색깔에 대해 더 알아보고 싶으시다면 답변해보세요!',
+        '어머님이 즐겨 보셨던 영화가 있다면요? 답변해보세요!'
       ],
       father: [
-        '아버님의 취미에 대해 더 알아보고 싶으시다면 질문해보세요!',
-        '아버님이 자랑스러워했던 일이 있다면요? 질문해보세요!',
-        '아버님의 바람 중 하나, 떠오르는 게 있나요? 질문해보세요!'
+        '아버님의 취미에 대해 더 알아보고 싶으시다면 답변해보세요!',
+        '아버님이 자랑스러워했던 일이 있다면요? 답변해보세요!',
+        '아버님의 바람 중 하나, 떠오르는 게 있나요? 답변해보세요!'
       ],
       grandmother: [
-        '할머님의 어린 시절 이야기를 들어보는 건 어떨까요?',
-        '할머님이 자주 만들어주시던 요리, 뭐가 떠오르세요?',
-        '할머님이 좋아하시는 꽃, 기억나시나요? 질문해보세요!'
+        '할머님의 어린 시절 이야기를 들어보는 건 어떨까요? 답변해보세요!',
+        '할머님이 자주 만들어주시던 요리, 뭐가 떠오르세요? 답변해보세요!',
+        '할머님이 좋아하시는 꽃, 기억나시나요? 답변해보세요!'
       ],
       grandfather: [
-        '할아버지의 인생 경험담을 기록해보세요!',
-        '할아버지가 눈물을 보이셨던 일이 있다면요? 질문해보세요!',
-        '할아버지가 품고 계신 희망이 있다면 어떤 걸까요? 질문해보세요!'
+        '할아버지의 인생 경험담을 기록해보세요! 답변해보세요!',
+        '할아버지가 눈물을 보이셨던 일이 있다면요? 답변해보세요!',
+        '할아버지의 희망이나 바람, 들어보고 싶으시나요? 답변해보세요!'
       ]
     };
     
@@ -135,8 +138,8 @@ export function ParentManagement() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/main')}
-            className="flex items-center gap-2"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1"
           >
             <ArrowLeft className="h-4 w-4" />
             뒤로
@@ -235,24 +238,10 @@ export function ParentManagement() {
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-xs text-muted-foreground">오늘 질문</p>
-                    <p className="text-sm font-medium">{parentData.pendingQuestions}개 대기</p>
+                    <p className="text-xs text-muted-foreground">총 답변 횟수</p>
+                    <p className="text-sm font-medium">{parentData.completedQuestions}개</p>
                   </div>
                 </div>
-              </div>
-
-              {/* 진행률 */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">정보 누적도</span>
-                  <span className="text-sm font-medium text-primary">
-                    {parentData.progressPercentage}%
-                  </span>
-                </div>
-                <Progress value={parentData.progressPercentage} className="h-2" />
-                <p className="text-xs text-muted-foreground">
-                  기록이 쌓일수록, {getRoleDisplayName(parentData.role)}을 더 이해할 수 있어요.
-                </p>
               </div>
 
               {/* 최근 질문 */}
@@ -272,7 +261,27 @@ export function ParentManagement() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <div className="grid grid-cols-2 gap-3">
-            <Card className="shadow-card border-accent/10 hover:shadow-lg transition-shadow cursor-pointer">
+            <Card 
+              className="shadow-card border-accent/10 hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => {
+                // 질문 기록에서 해당 부모님의 역할에 맞는 질문만 필터링
+                const questionRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]');
+                const parentAnswers = questionRecords.filter((record: any) => 
+                  record.parentId === parentId && 
+                  record.selectedRole === (parentData.role === 'mother' ? 'mother' : 'father')
+                );
+                
+                if (parentAnswers.length === 0) {
+                  alert('아직 답변한 질문이 없어요!');
+                } else {
+                  // 질문 히스토리 모달 표시
+                  const historyText = parentAnswers.map((record: any, index: number) => 
+                    `${index + 1}. ${record.question}\n답변: ${record.answer}\n날짜: ${record.date}\n\n`
+                  ).join('');
+                  alert(`질문 히스토리 (총 ${parentAnswers.length}개)\n\n${historyText}`);
+                }
+              }}
+            >
               <CardContent className="p-4 text-center">
                 <History className="h-8 w-8 mx-auto mb-2 text-accent" />
                 <h3 className="font-semibold text-sm mb-1">질문 히스토리</h3>
@@ -282,13 +291,34 @@ export function ParentManagement() {
             
             <Card className="shadow-card border-secondary/10 hover:shadow-lg transition-shadow cursor-pointer">
               <CardContent className="p-4 text-center">
-                <Camera className="h-8 w-8 mx-auto mb-2 text-secondary" />
-                <h3 className="font-semibold text-sm mb-1">사진첩</h3>
-                <p className="text-xs text-muted-foreground">관련 사진 저장</p>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                          const imageUrl = e.target?.result as string;
+                          setParentData(prev => ({ ...prev, avatar: imageUrl }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  <Camera className="h-8 w-8 mx-auto mb-2 text-secondary" />
+                  <h3 className="font-semibold text-sm mb-1">사진첩</h3>
+                  <p className="text-xs text-muted-foreground">관련 사진 저장</p>
+                </label>
               </CardContent>
             </Card>
             
-            <Card className="shadow-card border-primary/10 hover:shadow-lg transition-shadow cursor-pointer">
+            <Card 
+              className="shadow-card border-primary/10 hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate('/main', { state: { activeTab: 'calendar' } })}
+            >
               <CardContent className="p-4 text-center">
                 <Calendar className="h-8 w-8 mx-auto mb-2 text-primary" />
                 <h3 className="font-semibold text-sm mb-1">캘린더</h3>
@@ -296,7 +326,10 @@ export function ParentManagement() {
               </CardContent>
             </Card>
             
-            <Card className="shadow-card border-muted-foreground/10 hover:shadow-lg transition-shadow cursor-pointer">
+            <Card 
+              className="shadow-card border-muted-foreground/10 hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => alert('아직 구현이 안되었어요!')}
+            >
               <CardContent className="p-4 text-center">
                 <Share className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                 <h3 className="font-semibold text-sm mb-1">공유하기</h3>
@@ -324,9 +357,9 @@ export function ParentManagement() {
                     variant="gradient" 
                     size="sm"
                     className="w-full"
-                    onClick={() => navigate('/main')}
+                    onClick={() => navigate('/main', { state: { activeTab: 'question' } })}
                   >
-                    질문하러 가기
+                    답변하러 가기
                   </Button>
                 </div>
               </div>

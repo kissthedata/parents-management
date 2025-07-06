@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   Home, 
   Calendar, 
@@ -47,6 +47,8 @@ interface QuestionRecord {
   category: 'parent' | 'family';
   date: string;
   type: 'daily' | 'quiz';
+  parentId?: string; // 부모님 ID 추가
+  selectedRole?: 'mother' | 'father'; // 선택된 역할 추가
 }
 
 // 가족 멤버 타입
@@ -60,35 +62,35 @@ interface FamilyMember {
 
 const parentQuestions = [
   "부모님께 고마웠던 순간, 기억나는 게 있나요?",
-  "어머님이 좋아하시는 음식, 혹시 떠오르나요?",
-  "아버님 생신은 언제인지 기억하고 계신가요?",
-  "어머님이 좋아하는 색깔, 어떤 색이었나요?",
-  "아버님은 어떤 일을 하고 계셨나요?",
-  "어머님이 좋아하는 계절은 언제인가요?",
-  "아버님의 취미는 무엇이었나요?",
-  "어머님이 즐겨 보셨던 영화가 있다면요?",
-  "아버님은 어떤 꿈을 가지고 계셨나요?",
-  "어머님이 가장 좋아하시는 장소는 어디인가요?",
-  "아버님에게 가장 소중했던 추억은 무엇일까요?",
-  "어머님이 자주 들으셨던 노래가 있다면요?",
-  "요즘 아버님이 가장 걱정하고 계신 일은 뭘까요?",
-  "어머님이 좋아하시는 꽃, 기억나시나요?",
-  "아버님이 자랑스러워했던 일이 있다면요?",
-  "어머님이 즐겨 하시던 운동은 어떤 거였나요?",
-  "아버님의 바람 중 하나, 떠오르는 게 있나요?",
-  "어머님이 좋아하셨던 책이 있다면요?",
-  "아버님이 이뤄내셨던 일 중 가장 자랑스러운 건 뭘까요?",
-  "어머님이 자주 드시던 음료가 있다면요?",
-  "요즘 아버님이 가장 고민하고 계신 건 뭘까요?",
-  "어머님이 좋아하시는 동물이 있다면요?",
-  "아버님을 정말 기쁘게 했던 일이 무엇이었을까요?",
-  "어머님이 좋아하는 과일, 기억나시나요?",
-  "아버님이 눈물을 보이셨던 일이 있다면요?",
-  "어머님이 자주 만들어주시던 요리, 뭐가 떠오르세요?",
-  "아버님이 품고 계신 희망이 있다면 어떤 걸까요?",
-  "어머님이 빠지지 않고 챙겨보셨던 드라마가 있다면요?",
-  "아버님이 최근에 고마워하셨던 일이 있다면요?",
-  "어머님이 가보고 싶어 하셨던 여행지는 어디인가요?"
+  "{어머님}이 좋아하시는 음식, 혹시 떠오르나요?",
+  "{아버님} 생신은 언제인지 기억하고 계신가요?",
+  "{어머님}이 좋아하는 색깔, 어떤 색이었나요?",
+  "{아버님}은 어떤 일을 하고 계셨나요?",
+  "{어머님}이 좋아하는 계절은 언제인가요?",
+  "{아버님}의 취미는 무엇이었나요?",
+  "{어머님}이 즐겨 보셨던 영화가 있다면요?",
+  "{아버님}은 어떤 꿈을 가지고 계셨나요?",
+  "{어머님}이 가장 좋아하시는 장소는 어디인가요?",
+  "{아버님}에게 가장 소중했던 추억은 무엇일까요?",
+  "{어머님}이 자주 들으셨던 노래가 있다면요?",
+  "요즘 {아버님}이 가장 걱정하고 계신 일은 뭘까요?",
+  "{어머님}이 좋아하시는 꽃, 기억나시나요?",
+  "{아버님}이 자랑스러워했던 일이 있다면요?",
+  "{어머님}이 즐겨 하시던 운동은 어떤 거였나요?",
+  "{아버님}의 바람 중 하나, 떠오르는 게 있나요?",
+  "{어머님}이 좋아하셨던 책이 있다면요?",
+  "{아버님}이 이뤄내셨던 일 중 가장 자랑스러운 건 뭘까요?",
+  "{어머님}이 자주 드시던 음료가 있다면요?",
+  "요즘 {아버님}이 가장 고민하고 계신 건 뭘까요?",
+  "{어머님}이 좋아하시는 동물이 있다면요?",
+  "{아버님}을 정말 기쁘게 했던 일이 무엇이었을까요?",
+  "{어머님}이 좋아하는 과일, 기억나시나요?",
+  "{아버님}이 눈물을 보이셨던 일이 있다면요?",
+  "{어머님}이 자주 만들어주시던 요리, 뭐가 떠오르세요?",
+  "{아버님}이 품고 계신 희망이 있다면 어떤 걸까요?",
+  "{어머님}이 빠지지 않고 챙겨보셨던 드라마가 있다면요?",
+  "{아버님}이 최근에 고마워하셨던 일이 있다면요?",
+  "{어머님}이 가보고 싶어 하셨던 여행지는 어디인가요?"
 ];
 
 // 30개의 가족 질문
@@ -165,13 +167,17 @@ const unisonQuizQuestions = [
 ];
 export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [category, setCategory] = useState<'parent' | 'family'>('parent');
   const [quizShared, setQuizShared] = useState(false);
   
   // 질문 기록 상태
-  const [questionRecords, setQuestionRecords] = useState<QuestionRecord[]>([]);
+  const [questionRecords, setQuestionRecords] = useState<QuestionRecord[]>(() => {
+    const saved = localStorage.getItem('questionRecords');
+    return saved ? JSON.parse(saved) : [];
+  });
   
   // 현재 이구동성 퀴즈 상태 (랜덤 초기화)
   const [currentUnisonQuiz, setCurrentUnisonQuiz] = useState(() => {
@@ -179,15 +185,56 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
     return unisonQuizQuestions[randomIndex];
   });
   
+  // 오늘의 질문 세트 (10개씩 랜덤 선택)
+  const [todayParentQuestions, setTodayParentQuestions] = useState<string[]>(() => {
+    const saved = localStorage.getItem('todayParentQuestions');
+    const savedDate = localStorage.getItem('todayParentQuestionsDate');
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (saved && savedDate === today) {
+      return JSON.parse(saved);
+    } else {
+      // 30개 중 10개 랜덤 선택
+      const shuffled = [...parentQuestions].sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, 10);
+      localStorage.setItem('todayParentQuestions', JSON.stringify(selected));
+      localStorage.setItem('todayParentQuestionsDate', today);
+      return selected;
+    }
+  });
+
+  const [todayFamilyQuestions, setTodayFamilyQuestions] = useState<string[]>(() => {
+    const saved = localStorage.getItem('todayFamilyQuestions');
+    const savedDate = localStorage.getItem('todayFamilyQuestionsDate');
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (saved && savedDate === today) {
+      return JSON.parse(saved);
+    } else {
+      // 20개 중 10개 랜덤 선택
+      const shuffled = [...familyQuestions].sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, 10);
+      localStorage.setItem('todayFamilyQuestions', JSON.stringify(selected));
+      localStorage.setItem('todayFamilyQuestionsDate', today);
+      return selected;
+    }
+  });
+
   // 현재 질문 상태 (랜덤 초기화)
   const [currentParentQuestion, setCurrentParentQuestion] = useState(() => {
-    const randomIndex = Math.floor(Math.random() * parentQuestions.length);
-    return parentQuestions[randomIndex];
+    const randomIndex = Math.floor(Math.random() * todayParentQuestions.length);
+    return todayParentQuestions[randomIndex];
   });
   const [currentFamilyQuestion, setCurrentFamilyQuestion] = useState(() => {
-    const randomIndex = Math.floor(Math.random() * familyQuestions.length);
-    return familyQuestions[randomIndex];
+    const randomIndex = Math.floor(Math.random() * todayFamilyQuestions.length);
+    return todayFamilyQuestions[randomIndex];
   });
+  
+  // 현재 선택된 부모님 역할 상태
+  const [currentParentRole, setCurrentParentRole] = useState<'mother' | 'father'>('mother');
+  
+  // 현재 질문의 등록 상태
+  const [isCurrentQuestionRegistered, setIsCurrentQuestionRegistered] = useState(false);
   
   // 일정 상태 관리
   const [schedules, setSchedules] = useState<Array<{
@@ -258,7 +305,7 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
   const [showFeedbackSuccess, setShowFeedbackSuccess] = useState(false);
   const [showNotificationSuccess, setShowNotificationSuccess] = useState(false);
 
-  // 개인정보 동의 상태
+  // 개인정보 동의 상태 (링크 접속 시에만 표시)
   const [showPrivacyConsent, setShowPrivacyConsent] = useState(() => {
     const hasConsented = localStorage.getItem('privacyConsent');
     return !hasConsented; // 동의하지 않았다면 모달 표시
@@ -274,7 +321,7 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
   const [emailError, setEmailError] = useState('');
 
   // 약관/방침 전문 텍스트
-  const TERMS_TEXT = `✅ 잘잇지서비스 이용약관 (약관 예시)
+  const TERMS_TEXT = `잘잇지서비스 이용약관
 
 제1조(목적)
 이 약관은 잘잇지(이하 "회사")가 제공하는 '부모님 챙기기 앱 잘잇지' 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
@@ -321,7 +368,7 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
 	1. 본 약관의 해석은 대한민국 법률에 따릅니다.
 	2. 서비스와 관련한 분쟁은 민사소송법상의 관할법원에 제소합니다.`;
 
-const PRIVACY_TEXT = `🔒 잘잇지 개인정보처리방침 (예시)
+const PRIVACY_TEXT = `잘잇지 개인정보처리방침
 
 1. 수집하는 개인정보 항목 및 방법
 	• 수집 항목: 이름(또는 닉네임), 가족 구성 정보, 질문에 대한 답변, 기기 정보, 이용 로그 등
@@ -362,6 +409,11 @@ const isValidEmail = (email: string) => email.includes('@');
     localStorage.setItem('familyMembers', JSON.stringify(familyMembers));
   }, [familyMembers]);
 
+  // 질문 기록이 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem('questionRecords', JSON.stringify(questionRecords));
+  }, [questionRecords]);
+
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -377,15 +429,83 @@ const isValidEmail = (email: string) => email.includes('@');
   };
 
   const handleDailyQuestionRegister = (answer: string) => {
+    const questionText = category === 'parent' ? getDisplayParentQuestion() : currentFamilyQuestion;
+    
+    // 중복 질문 확인 (같은 질문이 이미 답변되었는지 체크)
+    const existingRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]');
+    const isDuplicate = existingRecords.some((record: QuestionRecord) => 
+      record.question === questionText && 
+      record.category === category &&
+      record.parentId === (category === 'parent' ? getCurrentParentId() : undefined)
+    );
+    
+    if (isDuplicate) {
+      alert('이미 답변한 질문이에요! 다음 질문을 선택해보세요.');
+      return;
+    }
+    
     const newRecord: QuestionRecord = {
       id: Date.now().toString(),
-      question: category === 'parent' ? currentParentQuestion : currentFamilyQuestion,
+      question: questionText,
       answer,
       category,
       date: new Date().toISOString().split('T')[0],
-      type: 'daily'
+      type: 'daily',
+      parentId: category === 'parent' ? getCurrentParentId() : undefined,
+      selectedRole: category === 'parent' ? currentParentRole : undefined
     };
     setQuestionRecords(prev => [newRecord, ...prev]);
+    
+    // 등록 상태를 true로 설정
+    setIsCurrentQuestionRegistered(true);
+  };
+
+  // 질문에서 역할 플레이스홀더를 실제 역할로 교체하는 함수
+  const replaceRolePlaceholder = (question: string, role: 'mother' | 'father') => {
+    const roleName = role === 'mother' ? '어머님' : '아버님';
+    return question.replace(/\{어머님\}|\{아버님\}/g, roleName);
+  };
+
+  // 오늘 답변한 질문 수 계산
+  const getTodayAnsweredCount = (category: 'parent' | 'family') => {
+    const today = new Date().toISOString().split('T')[0];
+    const existingRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]');
+    const todayRecords = existingRecords.filter((record: any) => 
+      record.category === category && 
+      record.type === 'daily' && 
+      record.date === today
+    );
+    return todayRecords.length;
+  };
+
+  // 진행 상황 텍스트 생성
+  const getProgressText = (category: 'parent' | 'family') => {
+    const answered = getTodayAnsweredCount(category);
+    const total = 10;
+    return `(${answered}/${total})`;
+  };
+
+  // 모든 질문을 답변했는지 확인
+  const isAllQuestionsAnswered = (category: 'parent' | 'family') => {
+    const answered = getTodayAnsweredCount(category);
+    return answered >= 10;
+  };
+
+  // 현재 부모님 질문을 표시용으로 가져오기
+  const getDisplayParentQuestion = () => {
+    return replaceRolePlaceholder(currentParentQuestion, currentParentRole);
+  };
+
+  // 현재 선택된 부모님 ID 가져오기 함수 (역할 기반)
+  const getCurrentParentId = () => {
+    const parentMembers = familyMembers.filter(m => m.role === 'parent');
+    if (parentMembers.length === 0) return undefined;
+    
+    // 현재 선택된 역할에 맞는 부모님 찾기
+    const targetRole = currentParentRole === 'mother' ? '어머니' : '아버지';
+    const targetMember = parentMembers.find(m => m.name.includes(targetRole));
+    
+    return targetMember?.id || parentMembers[0].id; // 없으면 첫 번째 부모님
   };
 
   const handleQuizRegister = (answer: string, extra: string) => {
@@ -427,21 +547,52 @@ const isValidEmail = (email: string) => email.includes('@');
   };
 
   const handleRandomParentQuestion = () => {
-    const answeredQuestions = questionRecords
-      .filter(record => record.category === 'parent' && record.type === 'daily')
-      .map(record => record.question);
+    // localStorage에서도 이미 답변한 질문 확인
+    const existingRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]');
+    const answeredQuestions = [
+      ...questionRecords.filter(record => record.category === 'parent' && record.type === 'daily').map(record => record.question),
+      ...existingRecords.filter((record: any) => record.category === 'parent' && record.type === 'daily').map((record: any) => record.question)
+    ];
     
-    const newQuestion = getRandomQuestion(parentQuestions, answeredQuestions);
+    // 현재 질문이 이미 답변되었다면 answeredQuestions에 추가
+    if (isCurrentQuestionRegistered) {
+      const currentQuestion = getDisplayParentQuestion();
+      if (!answeredQuestions.includes(currentQuestion)) {
+        answeredQuestions.push(currentQuestion);
+      }
+    }
+    
+    const newQuestion = getRandomQuestion(todayParentQuestions, answeredQuestions);
     setCurrentParentQuestion(newQuestion);
+    
+    // 랜덤으로 역할 선택 (어머님 또는 아버님)
+    const randomRole = Math.random() < 0.5 ? 'mother' : 'father';
+    setCurrentParentRole(randomRole);
+    
+    // 등록 상태 초기화
+    setIsCurrentQuestionRegistered(false);
   };
 
   const handleRandomFamilyQuestion = () => {
-    const answeredQuestions = questionRecords
-      .filter(record => record.category === 'family' && record.type === 'daily')
-      .map(record => record.question);
+    // localStorage에서도 이미 답변한 질문 확인
+    const existingRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]');
+    const answeredQuestions = [
+      ...questionRecords.filter(record => record.category === 'family' && record.type === 'daily').map(record => record.question),
+      ...existingRecords.filter((record: any) => record.category === 'family' && record.type === 'daily').map((record: any) => record.question)
+    ];
     
-    const newQuestion = getRandomQuestion(familyQuestions, answeredQuestions);
+    // 현재 질문이 이미 답변되었다면 answeredQuestions에 추가
+    if (isCurrentQuestionRegistered) {
+      if (!answeredQuestions.includes(currentFamilyQuestion)) {
+        answeredQuestions.push(currentFamilyQuestion);
+      }
+    }
+    
+    const newQuestion = getRandomQuestion(todayFamilyQuestions, answeredQuestions);
     setCurrentFamilyQuestion(newQuestion);
+    
+    // 등록 상태 초기화
+    setIsCurrentQuestionRegistered(false);
   };
 
   // 질문 결과를 받아서 기록에 추가하는 함수
@@ -511,6 +662,15 @@ const isValidEmail = (email: string) => email.includes('@');
     setMemberToDelete(null);
     setShowFamilyManageModal(false);
   };
+
+  // location state에서 activeTab 받아오기
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+      // state 초기화
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   const renderHomeTab = () => (
     <div className="space-y-6">
@@ -598,8 +758,8 @@ const isValidEmail = (email: string) => email.includes('@');
         >
           <CardContent className="p-4 text-center">
             <div className="text-2xl mb-2">📝</div>
-            <h3 className="font-semibold text-sm mb-1">질문 풀기</h3>
-            <p className="text-xs text-muted-foreground">15개 질문 세트</p>
+            <h3 className="font-semibold text-sm mb-1">처음 오셨나요?</h3>
+            <p className="text-xs text-muted-foreground">이 질문에 답 해보세요!</p>
           </CardContent>
         </Card>
         
@@ -646,6 +806,7 @@ const isValidEmail = (email: string) => email.includes('@');
                 <Button
                   variant="outline"
                   className="w-full h-14 text-left justify-start"
+                  disabled={familyMembers.some(member => member.name === '아버지')}
                   onClick={() => {
                     const newMember: FamilyMember = {
                       id: Date.now().toString(),
@@ -660,13 +821,16 @@ const isValidEmail = (email: string) => email.includes('@');
                   <Users className="h-5 w-5 mr-3 text-blue-600" />
                   <div>
                     <div className="font-medium">아버지</div>
-                    <div className="text-xs text-muted-foreground">부모님</div>
+                    <div className="text-xs text-muted-foreground">
+                      {familyMembers.some(member => member.name === '아버지') ? '이미 추가됨' : '부모님'}
+                    </div>
                   </div>
                 </Button>
                 
                 <Button
                   variant="outline"
                   className="w-full h-14 text-left justify-start"
+                  disabled={familyMembers.some(member => member.name === '어머니')}
                   onClick={() => {
                     const newMember: FamilyMember = {
                       id: Date.now().toString(),
@@ -681,7 +845,9 @@ const isValidEmail = (email: string) => email.includes('@');
                   <Heart className="h-5 w-5 mr-3 text-pink-600" />
                   <div>
                     <div className="font-medium">어머니</div>
-                    <div className="text-xs text-muted-foreground">부모님</div>
+                    <div className="text-xs text-muted-foreground">
+                      {familyMembers.some(member => member.name === '어머니') ? '이미 추가됨' : '부모님'}
+                    </div>
                   </div>
                 </Button>
                 
@@ -746,12 +912,15 @@ const isValidEmail = (email: string) => email.includes('@');
     <div className="space-y-6">
       <HeaderSection />
       <CategoryTabs value={category} onChange={val => setCategory(val as any)} />
-      <DailyQuestionCard
-        question={category === 'parent' ? currentParentQuestion : currentFamilyQuestion}
-        onRegister={handleDailyQuestionRegister}
-        onShare={target => alert(`${target}에게 공유!`)}
-        onRandomQuestion={category === 'parent' ? handleRandomParentQuestion : handleRandomFamilyQuestion}
-      />
+              <DailyQuestionCard
+          question={category === 'parent' ? getDisplayParentQuestion() : currentFamilyQuestion}
+          onRegister={handleDailyQuestionRegister}
+          onShare={target => alert('아직 구현이 안되었어요!')}
+          onRandomQuestion={category === 'parent' ? handleRandomParentQuestion : handleRandomFamilyQuestion}
+          isRegistered={isCurrentQuestionRegistered}
+          progressText={getProgressText(category)}
+          isAllAnswered={isAllQuestionsAnswered(category)}
+        />
       
       {/* 한 번에 질문 풀기 버튼 */}
       <Card className="shadow-card border-primary/10">
@@ -759,9 +928,9 @@ const isValidEmail = (email: string) => email.includes('@');
           <div className="mb-4">
             <span role="img" aria-label="questions" className="text-3xl">📝</span>
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">더 많은 질문에 답변해보세요</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-2">처음 오신 분이라면,</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            15개의 질문으로 나와 가족에 대해 더 깊이 알아보세요
+            먼저 테스트 해보세요!
           </p>
           <Button
             variant="gradient"
@@ -769,7 +938,7 @@ const isValidEmail = (email: string) => email.includes('@');
             onClick={onStartQuestions}
             className="w-full flex items-center justify-center gap-2"
           >
-            한 번에 질문 풀기
+            질문 풀기
             <ArrowRight className="h-4 w-4" />
           </Button>
         </CardContent>
@@ -780,7 +949,7 @@ const isValidEmail = (email: string) => email.includes('@');
         options={currentUnisonQuiz.options}
         onRegister={handleQuizRegister}
         onShare={target => { 
-          setQuizShared(true); 
+          alert('아직 구현이 안되었어요!');
         }}
         onViewResult={() => {}}
         onRandomQuestion={handleRandomUnisonQuiz}
@@ -1193,8 +1362,6 @@ const isValidEmail = (email: string) => email.includes('@');
       }
     };
 
-
-
     const copyFamilyCode = async () => {
       try {
         await navigator.clipboard.writeText(familyCode);
@@ -1211,8 +1378,6 @@ const isValidEmail = (email: string) => email.includes('@');
       setSelectedGalleryPhoto(photo);
       setShowPhotoModal(true);
     };
-
-
 
     return (
       <div className="space-y-6">
@@ -1234,49 +1399,27 @@ const isValidEmail = (email: string) => email.includes('@');
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-foreground">가족 멤버</h2>
           </div>
-          
           <div className="flex flex-wrap gap-3">
             {familyMembers.map((member) => (
-              <motion.div
+              <div
                 key={member.id}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
+                className="flex flex-col items-center cursor-pointer"
+                onClick={() => handleMemberClick(member)}
               >
-                <div 
-                  className="relative cursor-pointer group"
-                  onClick={() => handleMemberClick(member)}
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center text-lg font-bold text-primary border-2 border-transparent hover:border-primary/30 transition-all duration-300">
-                    {member.avatar ? (
-                      <img 
-                        src={member.avatar}
-                        alt={member.name}
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                    ) : (
-                      <span>{member.name.charAt(0)}</span>
-                    )}
-                  </div>
-                  <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold ${
-                    member.role === 'parent' ? 'bg-primary text-white' : 'bg-accent text-white'
-                  }`}>
-                    {member.role === 'parent' ? '부' : '자'}
-                  </div>
-                  <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                    {member.name}
-                  </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-accent/20 to-secondary/20 rounded-full flex items-center justify-center text-sm font-bold text-accent mb-1 shadow-md border border-accent/30">
+                  {member.avatar ? (
+                    <img 
+                      src={member.avatar}
+                      alt={member.name}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <span>{member.name.charAt(0)}</span>
+                  )}
                 </div>
-              </motion.div>
-            ))}
-            
-            {familyMembers.length === 0 && (
-              <div className="text-center w-full py-8">
-                <div className="text-4xl mb-4">👨‍👩‍👧‍👦</div>
-                <p className="text-muted-foreground mb-2">아직 가족 멤버가 없어요</p>
-                <p className="text-sm text-muted-foreground">새 멤버를 추가해보세요!</p>
+                <span className="text-xs text-foreground">{member.name}</span>
               </div>
-            )}
+            ))}
           </div>
         </div>
 
@@ -1291,10 +1434,9 @@ const isValidEmail = (email: string) => email.includes('@');
                 onChange={handlePhotoUpload}
                 className="hidden"
               />
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                <Upload className="h-4 w-4" />
-                사진 추가
-              </Button>
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors">
+                <Upload className="h-4 w-4 text-primary" />
+              </div>
             </label>
           </div>
           

@@ -84,7 +84,7 @@ export function UnisonQuizCard({ question, options, onRegister, onShare, onViewR
               onClick={handleRandomQuestion}
               className="flex-1"
             >
-              다른 질문
+              다음 질문
             </Button>
           </div>
           <div className="flex gap-2 mb-2">

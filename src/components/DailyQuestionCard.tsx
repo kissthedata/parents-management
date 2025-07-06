@@ -10,9 +10,12 @@ interface DailyQuestionCardProps {
   onRegister: (answer: string) => void;
   onShare: (target: 'parent' | 'child' | 'friend') => void;
   onRandomQuestion?: () => void;
+  isRegistered?: boolean;
+  progressText?: string;
+  isAllAnswered?: boolean;
 }
 
-export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuestion }: DailyQuestionCardProps) {
+export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuestion, isRegistered = false, progressText, isAllAnswered = false }: DailyQuestionCardProps) {
   const [answer, setAnswer] = useState('');
   const [flipped, setFlipped] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -32,6 +35,9 @@ export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuest
     }
     setAnswer('');
   };
+
+  // 답변이 등록되면 입력 필드도 비활성화
+  const isInputDisabled = isRegistered;
 
   return (
     <div className="flex justify-center mb-4">
@@ -59,43 +65,59 @@ export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuest
           style={{ backfaceVisibility: 'hidden', transform: flipped ? 'rotateY(0deg)' : 'rotateY(180deg)' }}
           onClick={e => e.stopPropagation()}
         >
-          <div className="mb-2 text-lg font-semibold text-center text-foreground">{question}</div>
-          <div className="flex w-full gap-2 mb-2">
-            <input
-              type="text"
-              className="flex-1 border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="답변을 입력하세요"
-              value={answer}
-              onChange={e => setAnswer(e.target.value)}
-              onClick={e => e.stopPropagation()}
-            />
-            <Button
-              variant="gradient"
-              onClick={e => { e.stopPropagation(); onRegister(answer); }}
-              disabled={!answer}
-              className="flex-shrink-0 px-4"
-            >
-              등록 &gt;
-            </Button>
+          <div className="mb-2 text-lg font-semibold text-center text-foreground">
+            {isAllAnswered ? (
+              <div>
+                <div className="text-lg mb-2">🎉 오늘은 여기까지만 적어도 돼요!</div>
+                <div className="text-sm text-muted-foreground">내일 새로운 질문으로 만나요</div>
+              </div>
+            ) : (
+              <>
+                {question} {progressText && <span className="text-sm text-muted-foreground ml-2">{progressText}</span>}
+              </>
+            )}
           </div>
-          <div className="flex w-full gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={e => { e.stopPropagation(); handleDontKnow(); }}
-              className="flex-1"
-            >
-              잘 모르겠어요
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={e => { e.stopPropagation(); handleRandomQuestion(); }}
-              className="flex-1"
-            >
-              다른 질문
-            </Button>
-          </div>
+          {!isAllAnswered && (
+            <div className="flex w-full gap-2 mb-2">
+              <input
+                type="text"
+                className={clsx("flex-1 border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary", isInputDisabled && "opacity-50 cursor-not-allowed")}
+                placeholder={isInputDisabled ? "답변이 등록되었습니다" : "답변을 입력하세요"}
+                value={answer}
+                onChange={e => setAnswer(e.target.value)}
+                onClick={e => e.stopPropagation()}
+                disabled={isInputDisabled}
+              />
+              <Button
+                variant="gradient"
+                onClick={e => { e.stopPropagation(); onRegister(answer); }}
+                disabled={!answer || isRegistered}
+                className={clsx("flex-shrink-0 px-4", isRegistered && "opacity-50 cursor-not-allowed")}
+              >
+                {isRegistered ? "등록됨" : "등록 >"}
+              </Button>
+            </div>
+          )}
+          {!isAllAnswered && (
+            <div className="flex w-full gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={e => { e.stopPropagation(); handleDontKnow(); }}
+                className="flex-1"
+              >
+                잘 모르겠어요
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={e => { e.stopPropagation(); handleRandomQuestion(); }}
+                className="flex-1"
+              >
+                다음 질문
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
