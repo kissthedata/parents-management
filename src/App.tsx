@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-route
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { MainPage } from "./pages/MainPage";
+import { ParentManagement } from "./pages/ParentManagement";
+import { MyManagement } from "./pages/MyManagement";
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -45,6 +47,8 @@ const AppContent = () => {
       <Route path="/question" element={
         <Index onQuestionComplete={handleQuestionResults} />
       } />
+      <Route path="/parent/:parentId" element={<ParentManagement />} />
+      <Route path="/me" element={<MyManagement />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>

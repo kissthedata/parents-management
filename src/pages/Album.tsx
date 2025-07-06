@@ -4,36 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Album as AlbumIcon, Heart, MessageCircle, Calendar } from "lucide-react";
 
 const Album = () => {
-  // Mock memory data
-  const memories = [
-    {
-      id: 1,
-      title: "가족 여행 계획",
-      date: "2024-01-10",
-      type: "대화",
-      preview: "제주도 여행에 대한 우리 가족의 다양한 의견들...",
-      image: "/placeholder.svg",
-      likes: 5
-    },
-    {
-      id: 2,
-      title: "아빠의 어린 시절",
-      date: "2024-01-08", 
-      type: "사진 퀴즈",
-      preview: "아빠가 공유한 어린 시절 사진과 추억들...",
-      image: "/placeholder.svg",
-      likes: 8
-    },
-    {
-      id: 3,
-      title: "우리 가족의 꿈",
-      date: "2024-01-05",
-      type: "질문 답변",
-      preview: "각자가 꿈꾸는 미래에 대한 솔직한 이야기들...",
-      image: "/placeholder.svg",
-      likes: 12
-    }
-  ];
+  // 빈 추억 데이터
+  const memories: Array<{
+    id: number;
+    title: string;
+    date: string;
+    type: string;
+    preview: string;
+    image: string;
+    likes: number;
+  }> = [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 pb-20">

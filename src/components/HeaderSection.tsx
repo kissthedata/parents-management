@@ -5,7 +5,7 @@ export function HeaderSection() {
   return (
     <div className="py-6 px-4 flex flex-col items-center bg-gradient-to-b from-primary/10 to-background rounded-b-3xl mb-4">
       <div className="text-sm text-muted-foreground mb-1">{today}</div>
-      <div className="text-xl font-bold mb-2">잘잇지, 오늘도 연결되는 하루 되세요</div>
+      <div className="text-xl font-bold mb-2">오늘의 질문이 도착했어요!</div>
       {/* 가족 일러스트: 임시 SVG */}
       <div className="w-24 h-16 flex items-center justify-center">
         <svg width="80" height="50" viewBox="0 0 80 50" fill="none" xmlns="http://www.w3.org/2000/svg">

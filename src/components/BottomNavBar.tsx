@@ -10,7 +10,7 @@ const tabs = [
   { key: 'question', label: '질문', icon: BookOpen },
   { key: 'calendar', label: '캘린더', icon: Calendar },
   { key: 'family', label: '우리 가족', icon: Users },
-  { key: 'more', label: '더보기', icon: Settings },
+  { key: 'settings', label: '더보기', icon: Settings },
 ];
 
 export function BottomNavBar({ value, onChange }: BottomNavBarProps) {

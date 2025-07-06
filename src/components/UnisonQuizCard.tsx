@@ -8,7 +8,7 @@ interface UnisonQuizCardProps {
   question: string;
   options: string[];
   onRegister: (answer: string, extra: string) => void;
-  onShare: (target: 'parent' | 'child' | 'friend') => void;
+  onShare: (target: 'parent' | 'friend') => void;
   onViewResult?: () => void;
   onRandomQuestion?: () => void;
   shared?: boolean;
@@ -99,10 +99,13 @@ export function UnisonQuizCard({ question, options, onRegister, onShare, onViewR
       <Dialog open={shareModalOpen} onOpenChange={open => { setShareModalOpen(open); setShareType(null); setCopied(false); }}>
         <DialogContent>
           <div className="font-bold text-lg mb-4 text-center">공유 대상 선택</div>
-          <div className="flex gap-2 mb-4">
-            <Button variant={shareType === 'parent' ? 'gradient' : 'outline'} className="flex-1" onClick={() => setShareType('parent')}>부모님에게</Button>
-            <Button variant={shareType === 'child' ? 'gradient' : 'outline'} className="flex-1" onClick={() => setShareType('child')}>자녀에게</Button>
-            <Button variant={shareType === 'friend' ? 'gradient' : 'outline'} className="flex-1" onClick={() => setShareType('friend')}>지인에게</Button>
+          <div className="flex flex-col gap-2 mb-4">
+            <Button variant={shareType === 'parent' ? 'gradient' : 'outline'} className="w-full" onClick={() => setShareType('parent')}>
+              부모님에게 이구동성 문제 풀어보게 하기!
+            </Button>
+            <Button variant={shareType === 'friend' ? 'gradient' : 'outline'} className="w-full" onClick={() => setShareType('friend')}>
+              지인에게 '잘잇지' 서비스 공유하기
+            </Button>
           </div>
           {shareType && (
             <div className="flex flex-col items-center gap-2">
