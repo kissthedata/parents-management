@@ -266,12 +266,20 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
   // 가족 관리 상태
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>(() => {
     const saved = localStorage.getItem('familyMembers');
-    return saved ? JSON.parse(saved) : [
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // 저장된 데이터가 있고 "나"가 포함되어 있으면 그대로 사용
+      if (Array.isArray(parsed) && parsed.some(member => member.name === '나')) {
+        return parsed;
+      }
+    }
+    // 저장된 데이터가 없거나 "나"가 없으면 초기 상태로 설정
+    return [
       {
         id: '1',
         name: '나',
         role: 'child',
-        joinDate: '2024-01-01'
+        joinDate: new Date().toISOString().split('T')[0]
       }
     ];
   });
