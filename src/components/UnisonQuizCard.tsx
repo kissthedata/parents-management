@@ -124,7 +124,7 @@ export function UnisonQuizCard({ question, options, onRegister, onShare, onViewR
                 }}
                 className="w-full"
               >
-                {copied ? '복사됨!' : 'Copy!'}
+                {copied ? '복사는 되었는데, 전송 기능 미구현..' : '전송 기능 미구현'}
               </Button>
             </div>
           )}

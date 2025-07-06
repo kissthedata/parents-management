@@ -173,12 +173,21 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
   // 질문 기록 상태
   const [questionRecords, setQuestionRecords] = useState<QuestionRecord[]>([]);
   
-  // 현재 이구동성 퀴즈 상태
-  const [currentUnisonQuiz, setCurrentUnisonQuiz] = useState(unisonQuizQuestions[0]);
+  // 현재 이구동성 퀴즈 상태 (랜덤 초기화)
+  const [currentUnisonQuiz, setCurrentUnisonQuiz] = useState(() => {
+    const randomIndex = Math.floor(Math.random() * unisonQuizQuestions.length);
+    return unisonQuizQuestions[randomIndex];
+  });
   
-  // 현재 질문 상태
-  const [currentParentQuestion, setCurrentParentQuestion] = useState(parentQuestions[0]);
-  const [currentFamilyQuestion, setCurrentFamilyQuestion] = useState(familyQuestions[0]);
+  // 현재 질문 상태 (랜덤 초기화)
+  const [currentParentQuestion, setCurrentParentQuestion] = useState(() => {
+    const randomIndex = Math.floor(Math.random() * parentQuestions.length);
+    return parentQuestions[randomIndex];
+  });
+  const [currentFamilyQuestion, setCurrentFamilyQuestion] = useState(() => {
+    const randomIndex = Math.floor(Math.random() * familyQuestions.length);
+    return familyQuestions[randomIndex];
+  });
   
   // 일정 상태 관리
   const [schedules, setSchedules] = useState<Array<{
@@ -255,7 +264,100 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
     return !hasConsented; // 동의하지 않았다면 모달 표시
   });
 
-  // 가족 멤버 상태가 변경될 때마다 localStorage에 저장
+  // 가족 관리 모달 상태
+  const [showFamilyManageModal, setShowFamilyManageModal] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<FamilyMember | null>(null);
+
+  // 모달 상태 추가
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [emailError, setEmailError] = useState('');
+
+  // 약관/방침 전문 텍스트
+  const TERMS_TEXT = `✅ 잘잇지서비스 이용약관 (약관 예시)
+
+제1조(목적)
+이 약관은 잘잇지(이하 "회사")가 제공하는 '부모님 챙기기 앱 잘잇지' 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
+
+제2조(정의)
+	1. "서비스"란 회사가 제공하는 가족 질문, 퀴즈, 캘린더 기능 등 모바일 또는 웹 기반의 서비스를 의미합니다.
+	2. "이용자"란 본 약관에 따라 서비스를 이용하는 자를 말합니다.
+	3. "회원"이란 서비스를 통해 개인정보를 등록한 자를 말합니다.
+
+제3조(약관의 게시 및 변경)
+회사는 본 약관을 앱 화면 또는 웹사이트에 게시하며, 관련 법령에 따라 변경할 수 있습니다.
+
+제4조(서비스의 제공 및 변경)
+	1. 회사는 아래와 같은 서비스를 제공합니다:
+	• 가족 질문 및 답변 기록 서비스
+	• 이구동성 퀴즈 기능
+	• 가족 캘린더 일정 등록 기능
+	2. 회사는 운영상 필요에 따라 서비스를 변경할 수 있습니다.
+
+제5조(서비스의 이용시간 및 중단)
+	1. 서비스는 연중무휴 24시간 이용할 수 있습니다.
+	2. 다음의 경우 서비스 제공이 일시 중단될 수 있습니다:
+	• 시스템 점검
+	• 기술적 장애 발생
+	• 회사의 사정으로 인한 변경 등
+
+제6조(회원가입)
+회원은 본 약관과 개인정보처리방침에 동의한 후 회원가입 절차를 통해 가입됩니다.
+
+제7조(이용자의 의무)
+이용자는 다음의 행위를 해서는 안 됩니다.
+	1. 타인의 정보 도용
+	2. 서비스 운영 방해 행위
+	3. 기타 관련 법령 위반
+
+제8조(회사의 책임제한)
+	1. 회사는 천재지변, 기술적 장애 등 불가항력적 사유로 인한 서비스 중단에 대해 책임을 지지 않습니다.
+	2. 회사는 이용자의 데이터 손실, 기기 문제 등 개인 환경에서 발생한 문제에 대해서도 책임지지 않습니다.
+
+제9조(지적재산권)
+서비스 내 모든 콘텐츠의 저작권은 회사 또는 정당한 권리를 가진 자에게 있으며, 무단 복제 및 배포를 금합니다.
+
+제10조(약관의 해석 및 분쟁해결)
+	1. 본 약관의 해석은 대한민국 법률에 따릅니다.
+	2. 서비스와 관련한 분쟁은 민사소송법상의 관할법원에 제소합니다.`;
+
+const PRIVACY_TEXT = `🔒 잘잇지 개인정보처리방침 (예시)
+
+1. 수집하는 개인정보 항목 및 방법
+	• 수집 항목: 이름(또는 닉네임), 가족 구성 정보, 질문에 대한 답변, 기기 정보, 이용 로그 등
+	• 수집 방법: 회원가입, 서비스 이용 중 자동 수집
+
+2. 개인정보의 수집 및 이용 목적
+회사는 다음의 목적을 위해 개인정보를 수집·이용합니다.
+	• 가족 관리 서비스 제공
+	• 질문/답변 기록 저장
+	• 사용자 맞춤형 기능 제공
+	• 서비스 개선 및 통계 분석
+
+3. 개인정보 보유 및 이용기간
+	• 회원 탈퇴 시 즉시 파기
+	• 관련 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관
+
+4. 개인정보의 제3자 제공
+회사는 이용자의 개인정보를 원칙적으로 외부에 제공하지 않습니다.
+단, 법령에 따라 요청이 있는 경우 예외로 할 수 있습니다.
+
+5. 개인정보의 파기 절차 및 방법
+	• 파기 절차: 이용자가 회원탈퇴 시 즉시 삭제
+	• 파기 방법: 전자적 파일 형태는 복구 불가능한 방식으로 삭제
+
+6. 이용자 및 법정대리인의 권리와 행사방법
+	• 자신의 개인정보 열람, 수정, 삭제를 언제든지 요청할 수 있습니다.
+	• 만 14세 미만 아동의 경우 법정대리인의 동의를 받습니다.
+
+7. 개인정보 보호책임자
+	• 책임자: 백남진
+	• 문의: qorskawls12@naver.com`;
+
+// 이메일 유효성 검사 함수
+const isValidEmail = (email: string) => email.includes('@');
+
+  // 가족 관리 모달 상태가 변경될 때마다 localStorage에 저장
   useEffect(() => {
     localStorage.setItem('familyMembers', JSON.stringify(familyMembers));
   }, [familyMembers]);
@@ -402,6 +504,12 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
     localStorage.setItem('privacyConsent', 'false');
     setShowPrivacyConsent(false);
     console.log('GA4 개인정보 수집 거부됨');
+  };
+
+  const handleDeleteMember = (id: string) => {
+    setFamilyMembers(prev => prev.filter(m => m.id !== id));
+    setMemberToDelete(null);
+    setShowFamilyManageModal(false);
   };
 
   const renderHomeTab = () => (
@@ -906,11 +1014,11 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
         {/* 일정 추가 모달 */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-md">
-              <CardHeader>
+            <Card className="w-full max-w-md max-h-[90vh] flex flex-col overflow-y-auto">
+              <CardHeader className="flex-shrink-0">
                 <CardTitle>일정 추가하기</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex-1 space-y-4">
                 <Input
                   placeholder="일정 제목"
                   value={newSchedule.title}
@@ -931,7 +1039,6 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
                   value={newSchedule.description}
                   onChange={(e) => setNewSchedule(prev => ({ ...prev, description: e.target.value }))}
                 />
-                
                 {/* 예시 일정 버튼들 */}
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-muted-foreground">자주 사용하는 일정</p>
@@ -1013,7 +1120,8 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
                     </Button>
                   </div>
                 </div>
-                
+              </CardContent>
+              <div className="flex-shrink-0 p-6 pt-0">
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -1030,7 +1138,7 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
                     추가하기
                   </Button>
                 </div>
-              </CardContent>
+              </div>
             </Card>
           </div>
         )}
@@ -1112,6 +1220,13 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
         <div className="text-center py-6">
           <h1 className="text-2xl font-bold text-foreground mb-2">우리 가족</h1>
           <p className="text-muted-foreground">소중한 가족과 함께 성장해요</p>
+        </div>
+
+        {/* 가족 관리 버튼 */}
+        <div className="flex justify-end mb-2 pr-2">
+          <Button variant="outline" size="sm" onClick={() => setShowFamilyManageModal(true)}>
+            가족 관리 &gt;
+          </Button>
         </div>
 
         {/* 가족 멤버 (작은 원형) */}
@@ -1222,30 +1337,47 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
           )}
         </div>
 
-
-
-
-
-        {/* 사진 상세 모달 */}
-        {showPhotoModal && selectedGalleryPhoto && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-            <div className="relative w-full max-w-2xl">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowPhotoModal(false)}
-                className="absolute top-4 right-4 z-10 bg-black/50 text-white hover:bg-black/70"
-              >
-                ✕
+        {/* 가족 구성원 삭제 모달 */}
+        {showFamilyManageModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="w-full max-w-sm bg-white rounded-xl shadow-xl p-6">
+              <h2 className="text-xl font-bold mb-4">가족 구성원 삭제</h2>
+              <p className="mb-4 text-sm text-muted-foreground">삭제할 가족 구성원을 선택하세요.</p>
+              <div className="space-y-2 mb-6">
+                {familyMembers.filter(m => m.role !== 'child').map(member => (
+                  <div key={member.id} className="flex items-center justify-between bg-muted rounded-lg px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      {member.avatar ? (
+                        <img src={member.avatar} alt={member.name} className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center font-bold text-accent-foreground">{member.name.charAt(0)}</div>
+                      )}
+                      <span className="font-medium">{member.name}</span>
+                    </div>
+                    <Button variant="destructive" size="sm" onClick={() => setMemberToDelete(member)}>
+                      삭제
+                    </Button>
+                  </div>
+                ))}
+                {familyMembers.filter(m => m.role !== 'child').length === 0 && (
+                  <div className="text-center text-muted-foreground py-4">삭제할 가족이 없습니다.</div>
+                )}
+              </div>
+              <Button variant="outline" className="w-full" onClick={() => setShowFamilyManageModal(false)}>
+                닫기
               </Button>
-              <img
-                src={selectedGalleryPhoto.url}
-                alt={selectedGalleryPhoto.title}
-                className="w-full h-auto rounded-lg"
-              />
-              <div className="absolute bottom-4 left-4 right-4 bg-black/60 text-white p-4 rounded-lg">
-                <h3 className="font-semibold">{selectedGalleryPhoto.title}</h3>
-                <p className="text-sm text-white/80">{selectedGalleryPhoto.date} • {selectedGalleryPhoto.uploadedBy}</p>
+            </div>
+          </div>
+        )}
+        {/* 삭제 확인 모달 */}
+        {memberToDelete && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="w-full max-w-xs bg-white rounded-xl shadow-xl p-6">
+              <h2 className="text-lg font-bold mb-4">정말 삭제할까요?</h2>
+              <p className="mb-4 text-sm text-muted-foreground">{memberToDelete.name}님을 가족에서 삭제하시겠어요?</p>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setMemberToDelete(null)}>취소</Button>
+                <Button variant="destructive" className="flex-1" onClick={() => handleDeleteMember(memberToDelete.id)}>삭제</Button>
               </div>
             </div>
           </div>
@@ -1355,13 +1487,21 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
               </div>
               
               {notificationType === 'email' ? (
-                <input
-                  type="email"
-                  value={notificationEmail}
-                  onChange={(e) => setNotificationEmail(e.target.value)}
-                  placeholder="이메일 주소를 입력해주세요"
-                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
-                />
+                <>
+                  <input
+                    type="email"
+                    value={notificationEmail}
+                    onChange={(e) => {
+                      setNotificationEmail(e.target.value);
+                      setEmailError(e.target.value && !isValidEmail(e.target.value) ? '올바른 이메일 형식이 아닙니다' : '');
+                    }}
+                    placeholder="이메일 주소를 입력해주세요"
+                    className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                  />
+                  {emailError && (
+                    <div className="text-xs text-red-500 mt-1">{emailError}</div>
+                  )}
+                </>
               ) : (
                 <input
                   type="tel"
@@ -1375,7 +1515,7 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
             
             <Button 
               onClick={handleNotificationSubmit}
-              disabled={!((notificationType === 'email' ? notificationEmail : notificationPhone).trim())}
+              disabled={notificationType === 'email' ? !notificationEmail.trim() || !!emailError : !notificationPhone.trim()}
               className="w-full"
               variant="gradient"
             >
@@ -1399,11 +1539,11 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="ghost" className="w-full justify-start text-left">
+            <Button variant="ghost" className="w-full justify-start text-left" onClick={() => setShowTermsModal(true)}>
               <span role="img" aria-label="terms" className="mr-2">📄</span>
               이용약관
             </Button>
-            <Button variant="ghost" className="w-full justify-start text-left">
+            <Button variant="ghost" className="w-full justify-start text-left" onClick={() => setShowPrivacyModal(true)}>
               <span role="img" aria-label="privacy" className="mr-2">🔒</span>
               개인정보처리방침
             </Button>
@@ -1414,14 +1554,29 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
           </CardContent>
         </Card>
 
-
-
-        {/* 앱 정보 */}
-        <div className="text-center py-4">
-          <p className="text-xs text-muted-foreground">
-            © 2025 잘잇지. All rights reserved.
-          </p>
-        </div>
+        {/* 약관/방침 모달 */}
+        {showTermsModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="w-full max-w-md bg-white rounded-xl shadow-xl flex flex-col max-h-[90vh]">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h2 className="text-lg font-bold">이용약관</h2>
+                <Button variant="ghost" size="sm" onClick={() => setShowTermsModal(false)}>닫기</Button>
+              </div>
+              <div className="overflow-y-auto p-4 text-sm whitespace-pre-line flex-1">{TERMS_TEXT}</div>
+            </div>
+          </div>
+        )}
+        {showPrivacyModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="w-full max-w-md bg-white rounded-xl shadow-xl flex flex-col max-h-[90vh]">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h2 className="text-lg font-bold">개인정보처리방침</h2>
+                <Button variant="ghost" size="sm" onClick={() => setShowPrivacyModal(false)}>닫기</Button>
+              </div>
+              <div className="overflow-y-auto p-4 text-sm whitespace-pre-line flex-1">{PRIVACY_TEXT}</div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

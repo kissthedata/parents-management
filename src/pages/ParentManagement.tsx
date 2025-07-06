@@ -51,6 +51,35 @@ export function ParentManagement() {
     avatar: undefined
   });
 
+  // familyMembers에서 parentId로 멤버 찾기
+  useEffect(() => {
+    const saved = localStorage.getItem('familyMembers');
+    if (saved && parentId) {
+      const members = JSON.parse(saved);
+      const found = members.find((m: any) => m.id === parentId);
+      if (found) {
+        // name을 기준으로 role 매핑 (더 구체적인 매칭을 먼저)
+        let role: ParentData['role'] = 'mother';
+        if (found.name.includes('할아버지')) role = 'grandfather';
+        else if (found.name.includes('할머니')) role = 'grandmother';
+        else if (found.name.includes('어머니')) role = 'mother';
+        else if (found.name.includes('아버지')) role = 'father';
+        
+        console.log('Found member:', found);
+        console.log('Mapped role:', role);
+        console.log('Member name:', found.name);
+        
+        setParentData(prev => ({
+          ...prev,
+          id: found.id,
+          name: found.name,
+          role,
+          avatar: found.avatar
+        }));
+      }
+    }
+  }, [parentId]);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return '좋은 아침이에요';
@@ -71,12 +100,30 @@ export function ParentManagement() {
 
 
   const getTipMessage = () => {
-    const tips = [
-      '어머님이 좋아하는 음식은 아직 모르시네요! 질문 드려보세요 :)',
-      '아버님의 취미에 대해 더 알아보고 싶으시다면 질문해보세요!',
-      '할머님의 어린 시절 이야기를 들어보는 건 어떨까요?',
-      '할아버지의 인생 경험담을 기록해보세요!'
-    ];
+    const roleTips = {
+      mother: [
+        '어머님이 좋아하는 음식은 아직 모르시네요! 질문 드려보세요 :)',
+        '어머님이 좋아하는 색깔에 대해 더 알아보고 싶으시다면 질문해보세요!',
+        '어머님이 즐겨 보셨던 영화가 있다면요? 질문해보세요!'
+      ],
+      father: [
+        '아버님의 취미에 대해 더 알아보고 싶으시다면 질문해보세요!',
+        '아버님이 자랑스러워했던 일이 있다면요? 질문해보세요!',
+        '아버님의 바람 중 하나, 떠오르는 게 있나요? 질문해보세요!'
+      ],
+      grandmother: [
+        '할머님의 어린 시절 이야기를 들어보는 건 어떨까요?',
+        '할머님이 자주 만들어주시던 요리, 뭐가 떠오르세요?',
+        '할머님이 좋아하시는 꽃, 기억나시나요? 질문해보세요!'
+      ],
+      grandfather: [
+        '할아버지의 인생 경험담을 기록해보세요!',
+        '할아버지가 눈물을 보이셨던 일이 있다면요? 질문해보세요!',
+        '할아버지가 품고 계신 희망이 있다면 어떤 걸까요? 질문해보세요!'
+      ]
+    };
+    
+    const tips = roleTips[parentData.role] || roleTips.mother;
     return tips[Math.floor(Math.random() * tips.length)];
   };
 
@@ -147,7 +194,7 @@ export function ParentManagement() {
               {getGreeting()}, {parentData.name}님!
             </h2>
             <p className="text-muted-foreground mb-3">
-              {getRoleDisplayName(parentData.role)}의 오늘 하루를 함께 기억해볼까요?
+              오늘 하루를 함께 기억해볼까요?
             </p>
             
             {/* 오늘의 질문 알림 */}
