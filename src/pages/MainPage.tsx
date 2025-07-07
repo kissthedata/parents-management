@@ -712,7 +712,7 @@ const isValidEmail = (email: string) => email.includes('@');
 
       {/* 가족 멤버 섹션 */}
       <div className="text-center">
-        <h2 className="text-xl font-semibold text-foreground mb-4">우리 가족</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">가족부터 추가해주세요!</h2>
         <div className="flex justify-center items-center gap-4 mb-6">
           {/* 나 (자녀) */}
           <div className="flex flex-col items-center">
