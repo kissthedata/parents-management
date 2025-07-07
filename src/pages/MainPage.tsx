@@ -172,6 +172,8 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [category, setCategory] = useState<'parent' | 'family'>('parent');
   const [quizShared, setQuizShared] = useState(false);
+  // 잘잇지 앱 소개 모달 상태
+  const [showAppIntroModal, setShowAppIntroModal] = useState(false);
   
   // 질문 기록 상태
   const [questionRecords, setQuestionRecords] = useState<QuestionRecord[]>(() => {
@@ -705,14 +707,85 @@ const isValidEmail = (email: string) => email.includes('@');
           가족과의 소중한 연결을 위한 특별한 공간
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          매일의 질문을 통해 서로를 더 깊이 이해하고,<br />
-          소중한 추억을 만들어가는 가족만의 이야기
+          데일리 카드로 부모님에 대해 더 깊이 알아보고,<br />
+          지난 추억 기록해보기
         </p>
       </div>
 
+      {/* 잘잇지 앱 소개 버튼 */}
+      <div className="mt-8 flex justify-center">
+        <Button
+          variant="gradient"
+          className="w-full max-w-xs py-4 text-lg font-semibold"
+          onClick={() => setShowAppIntroModal(true)}
+        >
+          잘잇지 앱을 소개할게요!
+        </Button>
+      </div>
+
+      {/* 잘잇지 앱 소개 모달 */}
+      {showAppIntroModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-bold">잘잇지 앱 소개</h2>
+              <Button variant="ghost" size="sm" onClick={() => setShowAppIntroModal(false)}>닫기</Button>
+            </div>
+            <div className="overflow-y-auto p-4 text-base flex-1 space-y-7">
+              <section>
+                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">잘잇지란? <span>🌱</span></h3>
+                <p className="leading-relaxed text-[1.05em]">
+                  잘잇지는 <b>부모님과의 소중한 대화와 추억</b>을 차곡차곡 담아두고, 가족 모두가 함께 웃고, 공감하며 성장할 수 있도록 도와주는 따뜻한 앱이에요.<br/>
+                  <br/>
+                  매일 주어지는 질문, 가족 퀴즈, 캘린더, 사진첩 기능을 통해 서로의 일상을 자연스럽게 잇고, 마음을 가까이 이어줘요.<br/>
+                </p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">주요 기능 <span>✨</span></h3>
+                <div className="space-y-4">
+                  <div>
+                    <div className="font-semibold flex items-center gap-2">오늘의 질문 <span>📝</span></div>
+                    <div className="text-[0.98em] text-muted-foreground mt-1">하루에 하나, 부모님 또는 가족에 대한 질문에 답하며<br/>우리만의 이야기를 기록해보세요.</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold flex items-center gap-2">이구동성 퀴즈 <span>🎲</span></div>
+                    <div className="text-[0.98em] text-muted-foreground mt-1">서로 얼마나 잘 알고 있을까?<br/>가족 모두가 함께 풀며 마음을 맞춰가는 퀴즈예요.</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold flex items-center gap-2">가족 캘린더 <span>📅</span></div>
+                    <div className="text-[0.98em] text-muted-foreground mt-1">생일, 병원, 기념일 등<br/>가족의 중요한 일정을 함께 확인하고 챙겨보세요.</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold flex items-center gap-2">가족 갤러리 <span>📸</span></div>
+                    <div className="text-[0.98em] text-muted-foreground mt-1">소중한 순간들을 사진으로 남기고,<br/>그 기억에 따뜻한 한 마디를 더해보세요.</div>
+                  </div>
+                </div>
+              </section>
+              <section>
+                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">사용 방법 <span>👀</span></h3>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li>홈에서 가족 멤버(부모님 등)를 추가해보세요.</li>
+                  <li>'오늘의 질문'에 답하며 일상의 대화를 시작해보세요.</li>
+                  <li>'이구동성 퀴즈'로 서로를 더 깊이 이해해보세요.</li>
+                  <li>'캘린더'로 가족의 일정을 함께 관리해보세요.</li>
+                  <li>'가족 갤러리'에 사진을 올려 추억을 함께 나눠보세요.</li>
+                </ol>
+              </section>
+              <section>
+                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">TIP <span>💡</span></h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>답변, 사진, 일정 등 모든 기록은 <b>내 기기</b>에 안전하게 저장돼요.</li>
+                  <li>앱에 대한 의견은 언제든 ‘더보기' 탭에서 들려주세요.<br/>여러분의 이야기가 더 따뜻한 서비스를 만드는 힘이 됩니다.</li>
+                </ul>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 가족 멤버 섹션 */}
       <div className="text-center">
-        <h2 className="text-xl font-semibold text-foreground mb-4">가족부터 추가해주세요!</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">부모님부터 추가해주세요!</h2>
         <div className="flex justify-center items-center gap-4 mb-6">
           {/* 나 (자녀) */}
           <div className="flex flex-col items-center">
@@ -927,6 +1000,8 @@ const isValidEmail = (email: string) => email.includes('@');
           </motion.div>
         </div>
       )}
+
+      
     </div>
   );
 
@@ -1537,30 +1612,7 @@ const isValidEmail = (email: string) => email.includes('@');
           <p className="text-muted-foreground">앱 설정과 정보를 확인해보세요</p>
         </div>
         
-        {/* 앱 정보 */}
-        <Card className="shadow-card border-primary/10">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span role="img" aria-label="app">📱</span>
-              앱 정보
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">앱 버전</span>
-              <span className="text-sm font-medium">1.0.0</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">개발자</span>
-              <span className="text-sm font-medium">백남진</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">문의</span>
-              <span className="text-sm font-medium text-primary">qorskawls12@naver.com</span>
-            </div>
-          </CardContent>
-        </Card>
-
+        
         {/* 피드백 */}
         <Card className="shadow-card border-accent/10">
           <CardHeader>
@@ -1669,6 +1721,30 @@ const isValidEmail = (email: string) => email.includes('@');
                 알림 신청이 완료되었습니다! 정식 출시 시 연락드릴게요. 🎉
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* 앱 정보 */}
+        <Card className="shadow-card border-primary/10">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <span role="img" aria-label="app">📱</span>
+              웹앱 정보
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">앱 버전</span>
+              <span className="text-sm font-medium">1.0.0</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">개발자</span>
+              <span className="text-sm font-medium">백남진</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">문의</span>
+              <span className="text-sm font-medium text-primary">qorskawls12@naver.com</span>
+            </div>
           </CardContent>
         </Card>
 

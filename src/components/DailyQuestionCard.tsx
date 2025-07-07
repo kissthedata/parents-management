@@ -59,7 +59,8 @@ export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuest
           style={{ backfaceVisibility: 'hidden', transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
           onClick={() => !flipped && setFlipped(true)}
         >
-          <span role="img" aria-label="tarot">🔮</span>
+          <span role="img" aria-label="tarot">🔮 </span>
+          <p className="text-sm mt-3 text-primary/200 font-normal">여기를 눌러주세요!</p>
         </div>
         {/* 카드 뒷면 (질문/입력/등록/공유) */}
         <div
