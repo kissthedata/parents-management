@@ -9,6 +9,8 @@ import { MainPage } from "./pages/MainPage";
 import { ParentManagement } from "./pages/ParentManagement";
 import { MyManagement } from "./pages/MyManagement";
 import ParentQuizSharePage from './pages/ParentQuizSharePage';
+import ParentGallery from './pages/ParentGallery';
+import Gallery from './pages/Gallery';
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -49,8 +51,10 @@ const AppContent = () => {
         <Index onQuestionComplete={handleQuestionResults} />
       } />
       <Route path="/parent/:parentId" element={<ParentManagement />} />
+      <Route path="/parent/:parentId/gallery" element={<ParentGallery />} />
       <Route path="/me" element={<MyManagement />} />
       <Route path="/share/parent/:quizId" element={<ParentQuizSharePage />} />
+      <Route path="/gallery" element={<Gallery />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>

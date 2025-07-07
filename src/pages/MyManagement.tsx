@@ -18,6 +18,15 @@ import {
   User
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose
+} from "@/components/ui/dialog";
 
 interface MyData {
   id: string;
@@ -34,6 +43,8 @@ interface MyData {
 
 export function MyManagement() {
   const navigate = useNavigate();
+  const [showHistory, setShowHistory] = useState(false);
+  const [myAnswers, setMyAnswers] = useState<any[]>([]);
   
   // 빈 데이터로 시작
   const [myData, setMyData] = useState<MyData>({
@@ -64,6 +75,14 @@ export function MyManagement() {
       '이구동성 퀴즈로 가족과 함께 즐거운 시간을 보내보세요!'
     ];
     return tips[Math.floor(Math.random() * tips.length)];
+  };
+
+  // 답변 히스토리 불러오기
+  const handleShowHistory = () => {
+    const questionRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]');
+    // parentId, selectedRole 없이 내 답변 전체
+    setMyAnswers(questionRecords);
+    setShowHistory(true);
   };
 
   return (
@@ -211,7 +230,7 @@ export function MyManagement() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <div className="grid grid-cols-2 gap-3">
-            <Card className="shadow-card border-accent/10 hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="shadow-card border-accent/10 hover:shadow-lg transition-shadow cursor-pointer" onClick={handleShowHistory}>
               <CardContent className="p-4 text-center">
                 <History className="h-8 w-8 mx-auto mb-2 text-accent" />
                 <h3 className="font-semibold text-sm mb-1">답변 히스토리</h3>
@@ -219,7 +238,7 @@ export function MyManagement() {
               </CardContent>
             </Card>
             
-            <Card className="shadow-card border-secondary/10 hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="shadow-card border-secondary/10 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/gallery')}>
               <CardContent className="p-4 text-center">
                 <Camera className="h-8 w-8 mx-auto mb-2 text-secondary" />
                 <h3 className="font-semibold text-sm mb-1">사진첩</h3>
@@ -227,7 +246,7 @@ export function MyManagement() {
               </CardContent>
             </Card>
             
-            <Card className="shadow-card border-primary/10 hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="shadow-card border-primary/10 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/main', { state: { activeTab: 'calendar' } })}>
               <CardContent className="p-4 text-center">
                 <Calendar className="h-8 w-8 mx-auto mb-2 text-primary" />
                 <h3 className="font-semibold text-sm mb-1">캘린더</h3>
@@ -235,7 +254,7 @@ export function MyManagement() {
               </CardContent>
             </Card>
             
-            <Card className="shadow-card border-muted-foreground/10 hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="shadow-card border-muted-foreground/10 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/main', { state: { activeTab: 'question' } })}>
               <CardContent className="p-4 text-center">
                 <Gamepad2 className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                 <h3 className="font-semibold text-sm mb-1">이구동성</h3>
@@ -273,6 +292,41 @@ export function MyManagement() {
           </Card>
         </motion.div>
       </div>
+
+      {/* 답변 히스토리 모달 */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>내 답변 히스토리</DialogTitle>
+            <DialogDescription>내가 답변한 모든 질문과 답변을 확인할 수 있습니다.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto space-y-4 mt-4">
+            {myAnswers.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">아직 답변한 질문이 없어요</div>
+            ) : (
+              myAnswers.map((record, idx) => (
+                <div key={record.id || idx} className="border-b pb-3 last:border-b-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">{record.date}</span>
+                    <span className="text-xs text-muted-foreground">{record.type === 'daily' ? '🔮' : '🎲'}</span>
+                  </div>
+                  <div className="mb-1">
+                    <span className="text-xs text-muted-foreground">질문</span>
+                    <div className="text-sm font-medium text-foreground">{record.question}</div>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">답변</span>
+                    <div className="text-sm text-foreground bg-muted/30 p-2 rounded-lg">{record.answer}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <DialogClose asChild>
+            <Button className="mt-4 w-full" variant="outline">닫기</Button>
+          </DialogClose>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

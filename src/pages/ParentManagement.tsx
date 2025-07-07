@@ -17,6 +17,14 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose
+} from "@/components/ui/dialog";
 
 interface ParentData {
   id: string;
@@ -35,6 +43,8 @@ interface ParentData {
 export function ParentManagement() {
   const { parentId } = useParams<{ parentId: string }>();
   const navigate = useNavigate();
+  const [showHistory, setShowHistory] = useState(false);
+  const [parentAnswers, setParentAnswers] = useState<any[]>([]);
   
   // 빈 데이터로 시작
   const [parentData, setParentData] = useState<ParentData>({
@@ -264,22 +274,13 @@ export function ParentManagement() {
             <Card 
               className="shadow-card border-accent/10 hover:shadow-lg transition-shadow cursor-pointer"
               onClick={() => {
-                // 질문 기록에서 해당 부모님의 역할에 맞는 질문만 필터링
                 const questionRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]');
                 const parentAnswers = questionRecords.filter((record: any) => 
                   record.parentId === parentId && 
                   record.selectedRole === (parentData.role === 'mother' ? 'mother' : 'father')
                 );
-                
-                if (parentAnswers.length === 0) {
-                  alert('아직 답변한 질문이 없어요!');
-                } else {
-                  // 질문 히스토리 모달 표시
-                  const historyText = parentAnswers.map((record: any, index: number) => 
-                    `${index + 1}. ${record.question}\n답변: ${record.answer}\n날짜: ${record.date}\n\n`
-                  ).join('');
-                  alert(`질문 히스토리 (총 ${parentAnswers.length}개)\n\n${historyText}`);
-                }
+                setParentAnswers(parentAnswers);
+                setShowHistory(true);
               }}
             >
               <CardContent className="p-4 text-center">
@@ -289,29 +290,11 @@ export function ParentManagement() {
               </CardContent>
             </Card>
             
-            <Card className="shadow-card border-secondary/10 hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="shadow-card border-secondary/10 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/parent/${parentId}/gallery`)}>
               <CardContent className="p-4 text-center">
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                          const imageUrl = e.target?.result as string;
-                          setParentData(prev => ({ ...prev, avatar: imageUrl }));
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                  <Camera className="h-8 w-8 mx-auto mb-2 text-secondary" />
-                  <h3 className="font-semibold text-sm mb-1">사진첩</h3>
-                  <p className="text-xs text-muted-foreground">관련 사진 저장</p>
-                </label>
+                <Camera className="h-8 w-8 mx-auto mb-2 text-secondary" />
+                <h3 className="font-semibold text-sm mb-1">사진첩</h3>
+                <p className="text-xs text-muted-foreground">관련 사진 저장</p>
               </CardContent>
             </Card>
             
@@ -367,6 +350,41 @@ export function ParentManagement() {
           </Card>
         </motion.div>
       </div>
+
+      {/* 답변 히스토리 모달 */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{parentData.name}님의 답변 히스토리</DialogTitle>
+            <DialogDescription>이 가족 구성원이 답변한 모든 질문과 답변을 확인할 수 있습니다.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto space-y-4 mt-4">
+            {parentAnswers.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">아직 답변한 질문이 없어요</div>
+            ) : (
+              parentAnswers.map((record, idx) => (
+                <div key={record.id || idx} className="border-b pb-3 last:border-b-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">{record.date}</span>
+                    <span className="text-xs text-muted-foreground">{record.type === 'daily' ? '🔮' : '🎲'}</span>
+                  </div>
+                  <div className="mb-1">
+                    <span className="text-xs text-muted-foreground">질문</span>
+                    <div className="text-sm font-medium text-foreground">{record.question}</div>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">답변</span>
+                    <div className="text-sm text-foreground bg-muted/30 p-2 rounded-lg">{record.answer}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <DialogClose asChild>
+            <Button className="mt-4 w-full" variant="outline">닫기</Button>
+          </DialogClose>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

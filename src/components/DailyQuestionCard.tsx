@@ -13,9 +13,10 @@ interface DailyQuestionCardProps {
   isRegistered?: boolean;
   progressText?: string;
   isAllAnswered?: boolean;
+  onDontKnow?: () => void;
 }
 
-export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuestion, isRegistered = false, progressText, isAllAnswered = false }: DailyQuestionCardProps) {
+export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuestion, isRegistered = false, progressText, isAllAnswered = false, onDontKnow }: DailyQuestionCardProps) {
   const [answer, setAnswer] = useState('');
   const [flipped, setFlipped] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -25,7 +26,11 @@ export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuest
   const copyRef = useRef<HTMLInputElement>(null);
 
   const handleDontKnow = () => {
-    onRegister('잘 모르겠어요');
+    if (onDontKnow) {
+      onDontKnow();
+    } else {
+      onRegister('잘 모르겠어요');
+    }
     setAnswer('');
   };
 
@@ -114,7 +119,7 @@ export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuest
                 onClick={e => { e.stopPropagation(); handleRandomQuestion(); }}
                 className="flex-1"
               >
-                다음 질문
+                중복된 질문이래요!
               </Button>
             </div>
           )}

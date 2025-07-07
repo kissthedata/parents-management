@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -448,7 +448,7 @@ const isValidEmail = (email: string) => email.includes('@');
     );
     
     if (isDuplicate) {
-      alert('이미 답변한 질문이에요! 다음 질문을 선택해보세요.');
+      alert('이미 답변한 질문이에요! 중복된 질문 버튼을 눌러주세요.');
       return;
     }
     
@@ -462,7 +462,15 @@ const isValidEmail = (email: string) => email.includes('@');
       parentId: category === 'parent' ? getCurrentParentId() : undefined,
       selectedRole: category === 'parent' ? currentParentRole : undefined
     };
-    setQuestionRecords(prev => [newRecord, ...prev]);
+    setQuestionRecords(prev => {
+      const newRecords = [newRecord, ...prev];
+      // setState 후 다음 문제로 이동
+      setTimeout(() => {
+        if (category === 'parent') handleRandomParentQuestion();
+        else handleRandomFamilyQuestion();
+      }, 0);
+      return newRecords;
+    });
     
     // 등록 상태를 true로 설정
     setIsCurrentQuestionRegistered(true);
@@ -525,7 +533,13 @@ const isValidEmail = (email: string) => email.includes('@');
       date: new Date().toISOString().split('T')[0],
       type: 'quiz'
     };
-    setQuestionRecords(prev => [newRecord, ...prev]);
+    setQuestionRecords(prev => {
+      const newRecords = [newRecord, ...prev];
+      setTimeout(() => {
+        handleRandomUnisonQuiz();
+      }, 0);
+      return newRecords;
+    });
   };
 
   const handleRandomUnisonQuiz = () => {
@@ -929,28 +943,6 @@ const isValidEmail = (email: string) => email.includes('@');
           progressText={getProgressText(category)}
           isAllAnswered={isAllQuestionsAnswered(category)}
         />
-      
-      {/* 한 번에 질문 풀기 버튼 */}
-      <Card className="shadow-card border-primary/10">
-        <CardContent className="p-6 text-center">
-          <div className="mb-4">
-            <span role="img" aria-label="questions" className="text-3xl">📝</span>
-          </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">처음 오신 분이라면,</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            먼저 테스트 해보세요!
-          </p>
-          <Button
-            variant="gradient"
-            size="lg"
-            onClick={onStartQuestions}
-            className="w-full flex items-center justify-center gap-2"
-          >
-            질문 풀기
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </CardContent>
-      </Card>
       
       <UnisonQuizCard
         question={currentUnisonQuiz.question}

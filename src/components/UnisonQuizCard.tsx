@@ -78,18 +78,10 @@ export function UnisonQuizCard({ question, options, onRegister, onShare, onViewR
             >
               잘 모르겠어요
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRandomQuestion}
-              className="flex-1"
-            >
-              다음 질문
-            </Button>
           </div>
           <div className="flex gap-2 mb-2">
             <Button variant="outline" onClick={() => setShareModalOpen(true)} className="flex-1 flex items-center gap-2">
-              공유<Share2 className="h-4 w-4" />
+              공유?<Share2 className="h-4 w-4" />
             </Button>
           </div>
         </CardContent>
