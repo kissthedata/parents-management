@@ -1852,3 +1852,71 @@ const isValidEmail = (email: string) => email.includes('@');
     </div>
   );
 } 
+
+async function addFamilyPhoto({
+  member_id,
+  url,
+  title,
+  uploaded_by
+}: {
+  member_id: string;
+  url: string;
+  title?: string;
+  uploaded_by?: string;
+}) {
+  const { data, error } = await supabase.from('family_photos').insert([
+    {
+      member_id,
+      url,
+      title,
+      uploaded_by
+    }
+  ]);
+  if (error) {
+    alert('사진 저장 실패: ' + error.message);
+  } else {
+    alert('사진 저장 성공!');
+  }
+}
+
+async function addSchedule({
+  title,
+  date,
+  time,
+  description
+}: {
+  title: string;
+  date: string;
+  time?: string;
+  description?: string;
+}) {
+  const { data, error } = await supabase.from('schedules').insert([
+    {
+      title,
+      date,
+      time,
+      description
+    }
+  ]);
+  if (error) {
+    alert('일정 추가 실패: ' + error.message);
+  } else {
+    alert('일정 추가 성공!');
+  }
+}
+
+// 피드백
+async function addFeedback(content: string, member_id?: string) {
+  const { data, error } = await supabase.from('feedbacks').insert([
+    { content, member_id }
+  ]);
+  if (error) alert('피드백 저장 실패: ' + error.message);
+}
+
+// 알림
+async function addNotification(type: string, value: string, member_id?: string) {
+  const { data, error } = await supabase.from('notifications').insert([
+    { type, value, member_id }
+  ]);
+  if (error) alert('알림 저장 실패: ' + error.message);
+}
