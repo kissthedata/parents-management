@@ -26,6 +26,7 @@ import { DailyQuestionCard } from "@/components/DailyQuestionCard";
 import { UnisonQuizCard } from "@/components/UnisonQuizCard";
 import { BottomNavBar } from "@/components/BottomNavBar";
 import { PrivacyConsentModal } from "@/components/PrivacyConsentModal";
+import { supabase } from "../lib/supabaseClient";
 
 type TabType = 'home' | 'question' | 'calendar' | 'family' | 'settings';
 
@@ -423,6 +424,15 @@ const isValidEmail = (email: string) => email.includes('@');
   useEffect(() => {
     localStorage.setItem('questionRecords', JSON.stringify(questionRecords));
   }, [questionRecords]);
+
+  useEffect(() => {
+    async function fetchQuestionRecords() {
+      const { data, error } = await supabase.from("question_records").select("*");
+      console.log("질문 기록 data:", data);
+      console.log("질문 기록 error:", error);
+    }
+    fetchQuestionRecords();
+  }, []);
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

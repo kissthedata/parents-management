@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PhotoQuiz } from "@/components/PhotoQuiz";
 import { Camera, Users, TrendingUp, ArrowRight } from "lucide-react";
+import { supabase } from '../lib/supabaseClient';
+import { useEffect } from "react";
 
 const Home = () => {
   // Mock data - would come from backend/state management
@@ -14,6 +16,14 @@ const Home = () => {
   ];
 
   const relationshipIndex = 78; // Mock percentage
+
+  useEffect(() => {
+    async function fetchData() {
+      const { data, error } = await supabase.from('your_table').select('*');
+      console.log(data, error);
+    }
+    fetchData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 pb-20">
