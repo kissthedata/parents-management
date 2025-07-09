@@ -566,21 +566,36 @@ const isValidEmail = (email: string) => email.includes('@');
     return targetMember?.id || parentMembers[0].id; // 없으면 첫 번째 부모님
   };
 
-  const handleQuizRegister = (answer: string, extra: string) => {
+  const handleQuizRegister = async (answer: string, extra: string) => {
+    const fullAnswer = extra ? `${answer} - ${extra}` : answer;
+  
+    const { error } = await supabase.from('unison_quiz_records').insert([
+      {
+        quiz: currentUnisonQuiz.question,
+        answer: fullAnswer,
+        answered_at: new Date().toISOString(), // 서버 시간 안 쓰려면 이렇게 명시 가능
+        member_id: getCurrentParentId() || null
+      }
+    ]);
+  
+    if (error) {
+      alert('이구동성 퀴즈 저장 실패: ' + error.message);
+      return;
+    }
+  
+    // local 기록에도 저장하고 다음 퀴즈로 넘기기
     const newRecord: QuestionRecord = {
       id: uuidv4(),
       question: currentUnisonQuiz.question,
-      answer: extra ? `${answer} - ${extra}` : answer,
+      answer: fullAnswer,
       category: 'parent',
       date: new Date().toISOString().split('T')[0],
       type: 'quiz'
     };
-    setQuestionRecords(prev => {
-      const newRecords = [newRecord, ...prev];
-      // 등록 후 바로 다음 퀴즈로 이동
+    setQuestionRecords(prev => [newRecord, ...prev]);
+    setTimeout(() => {
       handleRandomUnisonQuiz();
-      return newRecords;
-    });
+    }, 0);
   };
 
   const handleRandomUnisonQuiz = () => {
@@ -1174,7 +1189,7 @@ const isValidEmail = (email: string) => email.includes('@');
     // 요일 배열
     const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
     
-    const handleAddSchedule = () => {
+    const handleAddSchedule = async () => {
       if (newSchedule.title && newSchedule.date) {
         const schedule = {
           id: uuidv4(),
@@ -1183,6 +1198,9 @@ const isValidEmail = (email: string) => email.includes('@');
           time: newSchedule.time,
           description: newSchedule.description
         };
+
+        await addSchedule(schedule);
+        
         setSchedules(prev => [...prev, schedule]);
         setNewSchedule({ title: '', date: '', time: '', description: '' });
         setShowAddModal(false);
