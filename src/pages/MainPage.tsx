@@ -27,6 +27,7 @@ import { UnisonQuizCard } from "@/components/UnisonQuizCard";
 import { BottomNavBar } from "@/components/BottomNavBar";
 import { PrivacyConsentModal } from "@/components/PrivacyConsentModal";
 import { supabase } from "../lib/supabaseClient";
+import { v4 as uuidv4} from 'uuid';
 
 type TabType = 'home' | 'question' | 'calendar' | 'family' | 'settings';
 
@@ -188,7 +189,7 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
     return unisonQuizQuestions[randomIndex];
   });
   
-  // 오늘의 질문 세트 (10개씩 랜덤 선택)
+  // 오늘의 질문 세트 (5개씩 랜덤 선택)
   const [todayParentQuestions, setTodayParentQuestions] = useState<string[]>(() => {
     const saved = localStorage.getItem('todayParentQuestions');
     const savedDate = localStorage.getItem('todayParentQuestionsDate');
@@ -197,9 +198,9 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
     if (saved && savedDate === today) {
       return JSON.parse(saved);
     } else {
-      // 30개 중 10개 랜덤 선택
+      // 30개 중 5개 랜덤 선택
       const shuffled = [...parentQuestions].sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, 10);
+      const selected = shuffled.slice(0, 5);
       localStorage.setItem('todayParentQuestions', JSON.stringify(selected));
       localStorage.setItem('todayParentQuestionsDate', today);
       return selected;
@@ -214,9 +215,9 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
     if (saved && savedDate === today) {
       return JSON.parse(saved);
     } else {
-      // 20개 중 10개 랜덤 선택
+      // 20개 중 5개 랜덤 선택
       const shuffled = [...familyQuestions].sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, 10);
+      const selected = shuffled.slice(0, 5);
       localStorage.setItem('todayFamilyQuestions', JSON.stringify(selected));
       localStorage.setItem('todayFamilyQuestionsDate', today);
       return selected;
@@ -434,38 +435,84 @@ const isValidEmail = (email: string) => email.includes('@');
     fetchQuestionRecords();
   }, []);
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const newPhoto = {
-        id: Date.now().toString(),
-        url: URL.createObjectURL(file),
-        title: '새로운 사진',
-        date: new Date().toISOString().split('T')[0],
-        uploadedBy: '나'
-      };
-      setFamilyPhotos(prev => [newPhoto, ...prev]);
-    }
-  };
-
-  const handleDailyQuestionRegister = (answer: string) => {
-    const questionText = category === 'parent' ? getDisplayParentQuestion() : currentFamilyQuestion;
-    
-    // 중복 질문 확인 (같은 질문이 이미 답변되었는지 체크)
-    const existingRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]');
-    const isDuplicate = existingRecords.some((record: QuestionRecord) => 
-      record.question === questionText && 
-      record.category === category &&
-      record.parentId === (category === 'parent' ? getCurrentParentId() : undefined)
-    );
-    
-    if (isDuplicate) {
-      alert('이미 답변한 질문이에요! 중복된 질문 버튼을 눌러주세요.');
+    if (!file) return;
+  
+    // 👉 가짜 URL (브라우저 전용) — 실제 사진은 Supabase에 저장하지 않음
+    const localUrl = URL.createObjectURL(file);
+  
+    // 👉 이 시점에서 사용자가 누구인지 알 수 있으면 member_id로 기록 (optional)
+    const uploadedBy = '나'; // 또는 로그인 사용자 이름
+    const title = '새로운 사진';
+  
+    // ✅ Supabase에 URL만 기록
+    const { data, error } = await supabase.from('family_photos').insert([
+      {
+        url: localUrl,         // 가짜 URL
+        title,
+        uploaded_by: uploadedBy,
+        // member_id: "1234-uuid" ← 로그인 유저 연동 시에만 사용
+      }
+    ]);
+  
+    if (error) {
+      alert("DB 저장 실패: " + error.message);
       return;
     }
-    
+  
+    alert("사진 기록 저장 성공! (이미지는 로컬에서만 보여요)");
+  
+    // 화면에 반영 (UI)
+    const newPhoto = {
+      id: uuidv4(),
+      url: localUrl,
+      title,
+      date: new Date().toISOString().split('T')[0],
+      uploadedBy
+    };
+    setFamilyPhotos(prev => [newPhoto, ...prev]);
+  };
+
+  // 오늘 답변한 질문 수 계산 (localStorage + 최신 state 반영)
+  const getTodayAnsweredCount = (category: 'parent' | 'family', recordsOverride?: QuestionRecord[]) => {
+    const today = new Date().toISOString().split('T')[0];
+    const records = recordsOverride || questionRecords;
+    return records.filter(
+      (record: any) => record.category === category && record.type === 'daily' && record.date === today
+    ).length;
+  };
+
+  // 진행 상황 텍스트 생성
+  const getProgressText = (category: 'parent' | 'family', recordsOverride?: QuestionRecord[]) => {
+    const answered = getTodayAnsweredCount(category, recordsOverride);
+    const total = 5;
+    return `(${answered}/${total})`;
+  };
+
+  // 모든 질문을 답변했는지 확인
+  const isAllQuestionsAnswered = (category: 'parent' | 'family', recordsOverride?: QuestionRecord[]) => {
+    const answered = getTodayAnsweredCount(category, recordsOverride);
+    return answered >= 5;
+  };
+
+  // 답변 등록 핸들러 (잘 모르겠어요 포함)
+  const handleDailyQuestionRegister = async (answer: string) => {
+    if (isAllQuestionsAnswered(category)) return; // 이미 끝났으면 무시
+    const questionText = category === 'parent' ? getDisplayParentQuestion() : currentFamilyQuestion;
+    // 중복 방지
+    const isDuplicate = questionRecords.some((record: QuestionRecord) =>
+      record.question === questionText &&
+      record.category === category
+    );
+    if (isDuplicate) {
+      // 이미 답변한 질문이면 그냥 다음 질문으로
+      if (category === 'parent') handleRandomParentQuestion();
+      else handleRandomFamilyQuestion();
+      return;
+    }
     const newRecord: QuestionRecord = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       question: questionText,
       answer,
       category,
@@ -474,17 +521,25 @@ const isValidEmail = (email: string) => email.includes('@');
       parentId: category === 'parent' ? getCurrentParentId() : undefined,
       selectedRole: category === 'parent' ? currentParentRole : undefined
     };
+    // Supabase 저장
+    await supabase.from('question_records').insert([
+      {
+        question: questionText,
+        answer: answer,
+        category: category,
+        date: new Date().toISOString(),
+      }
+    ]);
+    // 기록에 추가하고, 카운트/진행상황 즉시 반영
     setQuestionRecords(prev => {
       const newRecords = [newRecord, ...prev];
-      // setState 후 다음 문제로 이동
-      setTimeout(() => {
+      // 5/5가 되면 더 이상 질문 넘기지 않음
+      if (!isAllQuestionsAnswered(category, newRecords)) {
         if (category === 'parent') handleRandomParentQuestion();
         else handleRandomFamilyQuestion();
-      }, 0);
+      }
       return newRecords;
     });
-    
-    // 등록 상태를 true로 설정
     setIsCurrentQuestionRegistered(true);
   };
 
@@ -492,31 +547,6 @@ const isValidEmail = (email: string) => email.includes('@');
   const replaceRolePlaceholder = (question: string, role: 'mother' | 'father') => {
     const roleName = role === 'mother' ? '어머님' : '아버님';
     return question.replace(/\{어머님\}|\{아버님\}/g, roleName);
-  };
-
-  // 오늘 답변한 질문 수 계산
-  const getTodayAnsweredCount = (category: 'parent' | 'family') => {
-    const today = new Date().toISOString().split('T')[0];
-    const existingRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]');
-    const todayRecords = existingRecords.filter((record: any) => 
-      record.category === category && 
-      record.type === 'daily' && 
-      record.date === today
-    );
-    return todayRecords.length;
-  };
-
-  // 진행 상황 텍스트 생성
-  const getProgressText = (category: 'parent' | 'family') => {
-    const answered = getTodayAnsweredCount(category);
-    const total = 10;
-    return `(${answered}/${total})`;
-  };
-
-  // 모든 질문을 답변했는지 확인
-  const isAllQuestionsAnswered = (category: 'parent' | 'family') => {
-    const answered = getTodayAnsweredCount(category);
-    return answered >= 10;
   };
 
   // 현재 부모님 질문을 표시용으로 가져오기
@@ -538,7 +568,7 @@ const isValidEmail = (email: string) => email.includes('@');
 
   const handleQuizRegister = (answer: string, extra: string) => {
     const newRecord: QuestionRecord = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       question: currentUnisonQuiz.question,
       answer: extra ? `${answer} - ${extra}` : answer,
       category: 'parent',
@@ -547,9 +577,8 @@ const isValidEmail = (email: string) => email.includes('@');
     };
     setQuestionRecords(prev => {
       const newRecords = [newRecord, ...prev];
-      setTimeout(() => {
-        handleRandomUnisonQuiz();
-      }, 0);
+      // 등록 후 바로 다음 퀴즈로 이동
+      handleRandomUnisonQuiz();
       return newRecords;
     });
   };
@@ -659,17 +688,31 @@ const isValidEmail = (email: string) => email.includes('@');
   }, [onQuestionResults]);
 
   // 더보기 탭 핸들러 함수들
-  const handleFeedbackSubmit = () => {
+  const handleFeedbackSubmit = async () => {
     if (feedbackText.trim()) {
+        const {data, error} = await supabase.from("feedbacks").insert([
+          {content: feedbackText}
+        ])
+        if (error) {
+          alert("피드백 저장 실패: " + error.message);
+          return;
+        }
       setShowFeedbackSuccess(true);
       setFeedbackText('');
       setTimeout(() => setShowFeedbackSuccess(false), 3000);
     }
   };
 
-  const handleNotificationSubmit = () => {
+  const handleNotificationSubmit = async () => {
     const contact = notificationType === 'email' ? notificationEmail : notificationPhone;
     if (contact.trim()) {
+      const {data, error} = await supabase.from("notifications").insert([
+        {type: notificationType , value: contact}
+      ])
+      if (error) {
+        alert("피드백 저장 실패: " + error.message);
+        return;
+      }
       setShowNotificationSuccess(true);
       setNotificationEmail('');
       setNotificationPhone('');
@@ -914,7 +957,7 @@ const isValidEmail = (email: string) => email.includes('@');
                   disabled={familyMembers.some(member => member.name === '아버지')}
                   onClick={() => {
                     const newMember: FamilyMember = {
-                      id: Date.now().toString(),
+                      id: uuidv4(),
                       name: '아버지',
                       role: 'parent',
                       joinDate: new Date().toISOString().split('T')[0]
@@ -938,7 +981,7 @@ const isValidEmail = (email: string) => email.includes('@');
                   disabled={familyMembers.some(member => member.name === '어머니')}
                   onClick={() => {
                     const newMember: FamilyMember = {
-                      id: Date.now().toString(),
+                      id: uuidv4(),
                       name: '어머니',
                       role: 'parent',
                       joinDate: new Date().toISOString().split('T')[0]
@@ -961,7 +1004,7 @@ const isValidEmail = (email: string) => email.includes('@');
                   className="w-full h-14 text-left justify-start"
                   onClick={() => {
                     const newMember: FamilyMember = {
-                      id: Date.now().toString(),
+                      id: uuidv4(),
                       name: '할아버지',
                       role: 'parent',
                       joinDate: new Date().toISOString().split('T')[0]
@@ -982,7 +1025,7 @@ const isValidEmail = (email: string) => email.includes('@');
                   className="w-full h-14 text-left justify-start"
                   onClick={() => {
                     const newMember: FamilyMember = {
-                      id: Date.now().toString(),
+                      id: uuidv4(),
                       name: '할머니',
                       role: 'parent',
                       joinDate: new Date().toISOString().split('T')[0]
@@ -1020,10 +1063,10 @@ const isValidEmail = (email: string) => email.includes('@');
       <HeaderSection />
       <CategoryTabs value={category} onChange={val => setCategory(val as any)} />
               <DailyQuestionCard
-          question={category === 'parent' ? getDisplayParentQuestion() : currentFamilyQuestion}
+          question={isAllQuestionsAnswered(category) ? '' : (category === 'parent' ? getDisplayParentQuestion() : currentFamilyQuestion)}
           onRegister={handleDailyQuestionRegister}
           onShare={target => alert('아직 구현이 안되었어요!')}
-          onRandomQuestion={category === 'parent' ? handleRandomParentQuestion : handleRandomFamilyQuestion}
+          onRandomQuestion={category === 'parent' ? handleSkipAnsweredParentQuestion : handleSkipAnsweredFamilyQuestion}
           isRegistered={isCurrentQuestionRegistered}
           progressText={getProgressText(category)}
           isAllAnswered={isAllQuestionsAnswered(category)}
@@ -1134,7 +1177,7 @@ const isValidEmail = (email: string) => email.includes('@');
     const handleAddSchedule = () => {
       if (newSchedule.title && newSchedule.date) {
         const schedule = {
-          id: Date.now().toString(),
+          id: uuidv4(),
           title: newSchedule.title,
           date: newSchedule.date,
           time: newSchedule.time,
@@ -1436,7 +1479,7 @@ const isValidEmail = (email: string) => email.includes('@');
       if (joinCode.length === 6) {
         // 실제로는 서버에서 코드 검증
         const newMember: FamilyMember = {
-          id: Date.now().toString(),
+          id: uuidv4(),
           name: '새로운 멤버',
           role: 'child',
           joinDate: new Date().toISOString().split('T')[0]
@@ -1832,6 +1875,14 @@ const isValidEmail = (email: string) => email.includes('@');
       default:
         return null;
     }
+  };
+
+  // 이미 답변한 질문(중복) 버튼 핸들러
+  const handleSkipAnsweredParentQuestion = () => {
+    handleRandomParentQuestion();
+  };
+  const handleSkipAnsweredFamilyQuestion = () => {
+    handleRandomFamilyQuestion();
   };
 
   return (

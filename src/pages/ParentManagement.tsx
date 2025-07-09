@@ -292,9 +292,9 @@ export function ParentManagement() {
             
             <Card className="shadow-card border-secondary/10 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/parent/${parentId}/gallery`)}>
               <CardContent className="p-4 text-center">
-                <Camera className="h-8 w-8 mx-auto mb-2 text-secondary" />
-                <h3 className="font-semibold text-sm mb-1">사진첩</h3>
-                <p className="text-xs text-muted-foreground">관련 사진 저장</p>
+                  <Camera className="h-8 w-8 mx-auto mb-2 text-secondary" />
+                  <h3 className="font-semibold text-sm mb-1">사진첩</h3>
+                  <p className="text-xs text-muted-foreground">관련 사진 저장</p>
               </CardContent>
             </Card>
             

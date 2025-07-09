@@ -4,6 +4,9 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Settings as SettingsIcon, User, Bell, Shield, HelpCircle, LogOut } from "lucide-react";
 
+//supabase 
+import { supabase } from "../lib/supabaseClient";
+
 const Settings = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 pb-20">

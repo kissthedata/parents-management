@@ -23,10 +23,22 @@ export function UnisonQuizCard({ question, options, onRegister, onShare, onViewR
   const shareLink = shareType ? `https://familyapp.com/share/${shareType}/12345` : '';
   const copyRef = useRef<HTMLInputElement>(null);
 
+  // 등록 후 입력값 초기화 및 다음 문제로 이동
+  const handleRegister = () => {
+    if (!selected) return;
+    onRegister(selected, extra);
+    setSelected('');
+    setExtra('');
+  };
+
   const handleDontKnow = () => {
     onRegister('잘 모르겠어요', '');
     setSelected('');
     setExtra('');
+  };
+
+  const handleOptionClick = (opt: string) => {
+    setSelected(opt);
   };
 
   const handleRandomQuestion = () => {
@@ -53,7 +65,9 @@ export function UnisonQuizCard({ question, options, onRegister, onShare, onViewR
               <button
                 key={opt}
                 className={`w-full px-4 py-2 rounded-lg border text-left transition-colors font-medium ${selected === opt ? 'bg-accent text-white border-accent shadow-glow' : 'bg-muted text-muted-foreground hover:bg-accent/20'}`}
-                onClick={() => setSelected(opt)}
+                onClick={() => {
+                  handleOptionClick(opt);
+                }}
               >
                 {opt}
               </button>
@@ -66,7 +80,7 @@ export function UnisonQuizCard({ question, options, onRegister, onShare, onViewR
             value={extra}
             onChange={e => setExtra(e.target.value)}
           />
-          <Button variant="gradient" onClick={() => onRegister(selected, extra)} disabled={!selected} className="w-full flex items-center gap-2 mb-2">
+          <Button variant="gradient" onClick={handleRegister} disabled={!selected} className="w-full flex items-center gap-2 mb-2">
             등록<Send className="h-4 w-4" />
           </Button>
           <div className="flex gap-2 mb-2">

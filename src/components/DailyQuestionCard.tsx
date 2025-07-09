@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Share2, Send, User, Baby } from 'lucide-react';
 import clsx from 'clsx';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
+import { supabase } from "../lib/supabaseClient";
 
 interface DailyQuestionCardProps {
   question: string;
@@ -25,6 +26,14 @@ export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuest
   const shareLink = shareType ? `https://familyapp.com/share/${shareType}/12345` : '';
   const copyRef = useRef<HTMLInputElement>(null);
 
+  // 답변 등록 후 입력창 초기화 및 다음 질문으로 이동
+  const handleRegister = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!answer) return;
+    onRegister(answer);
+    setAnswer(''); // 입력값 초기화
+  };
+
   const handleDontKnow = () => {
     if (onDontKnow) {
       onDontKnow();
@@ -42,7 +51,7 @@ export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuest
   };
 
   // 답변이 등록되면 입력 필드도 비활성화
-  const isInputDisabled = isRegistered;
+  const isInputDisabled = false;
 
   return (
     <div className="flex justify-center mb-4">
@@ -96,11 +105,11 @@ export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuest
               />
               <Button
                 variant="gradient"
-                onClick={e => { e.stopPropagation(); onRegister(answer); }}
-                disabled={!answer || isRegistered}
-                className={clsx("flex-shrink-0 px-4", isRegistered && "opacity-50 cursor-not-allowed")}
+                onClick={handleRegister}
+                disabled={!answer}
+                className="flex-shrink-0 px-4"
               >
-                {isRegistered ? "등록됨" : "등록 >"}
+                등록 &gt;
               </Button>
             </div>
           )}
@@ -120,7 +129,7 @@ export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuest
                 onClick={e => { e.stopPropagation(); handleRandomQuestion(); }}
                 className="flex-1"
               >
-                중복된 질문이래요!
+                이미 답변했어요!
               </Button>
             </div>
           )}
