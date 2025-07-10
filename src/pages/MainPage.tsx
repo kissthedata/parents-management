@@ -567,35 +567,39 @@ const isValidEmail = (email: string) => email.includes('@');
   };
 
   const handleQuizRegister = async (answer: string, extra: string) => {
-    const fullAnswer = extra ? `${answer} - ${extra}` : answer;
-  
-    const { error } = await supabase.from('unison_quiz_records').insert([
-      {
-        quiz: currentUnisonQuiz.question,
-        answer: fullAnswer,
-        answered_at: new Date().toISOString(), // 서버 시간 안 쓰려면 이렇게 명시 가능
-        member_id: getCurrentParentId() || null
-      }
-    ]);
-  
-    if (error) {
-      alert('이구동성 퀴즈 저장 실패: ' + error.message);
-      return;
-    }
-  
-    // local 기록에도 저장하고 다음 퀴즈로 넘기기
     const newRecord: QuestionRecord = {
       id: uuidv4(),
       question: currentUnisonQuiz.question,
-      answer: fullAnswer,
+      answer: extra ? `${answer} - ${extra}` : answer,
       category: 'parent',
       date: new Date().toISOString().split('T')[0],
       type: 'quiz'
     };
-    setQuestionRecords(prev => [newRecord, ...prev]);
-    setTimeout(() => {
+    
+    // Supabase에 저장 (unison_quiz_records 테이블) - 에러 처리 추가
+    const { data, error } = await supabase.from('unison_quiz_records').insert([
+      {
+        member_id: null, // foreign key constraint 에러 방지
+        quiz: currentUnisonQuiz.question,
+        answer: extra ? `${answer} - ${extra}` : answer,
+        // answered_at은 자동으로 설정됨
+      }
+    ]);
+    
+    if (error) {
+      console.error('이구동성 퀴즈 저장 실패:', error);
+      alert('이구동성 퀴즈 저장 실패: ' + error.message);
+      return;
+    }
+    
+    console.log('이구동성 퀴즈 저장 성공:', data);
+    
+    setQuestionRecords(prev => {
+      const newRecords = [newRecord, ...prev];
+      // 등록 후 바로 다음 퀴즈로 이동
       handleRandomUnisonQuiz();
-    }, 0);
+      return newRecords;
+    });
   };
 
   const handleRandomUnisonQuiz = () => {
