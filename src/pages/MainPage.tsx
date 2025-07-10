@@ -859,6 +859,13 @@ const isValidEmail = (email: string) => email.includes('@');
                 </p>
               </section>
               <section>
+                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">주의 <span>⚠️ </span></h3>
+                <p className="leading-relaxed text-[1.05em]">
+                  지금은 MVP(최소 기능 제품)라, 브라우저를 닫고 다시 켜면, 데이터가 사라져요! 어떤 기능을 좋아하는 지, 분석하기 위한 서비스예요.
+                  여러 지표들이 좋게 나온다면, 고도화 된 서비스로 재탄생할거예요!
+                </p>
+              </section>
+              <section>
                 <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">주요 기능 <span>✨</span></h3>
                 <div className="space-y-4">
                   <div>
