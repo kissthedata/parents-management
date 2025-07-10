@@ -171,6 +171,12 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<TabType>('home');
+  
+  // 세션별 고유 ID 생성 (페이지 새로고침 시마다 새로운 사용자)
+  const [userId] = useState(() => {
+    const newUserId = 'user_' + Math.random().toString(36).substring(2, 15);
+    return newUserId;
+  });
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [category, setCategory] = useState<'parent' | 'family'>('parent');
   const [quizShared, setQuizShared] = useState(false);
@@ -428,20 +434,21 @@ const isValidEmail = (email: string) => email.includes('@');
 
   useEffect(() => {
     async function fetchQuestionRecords() {
-      const { data, error } = await supabase.from("question_records").select("*");
+      const { data, error } = await supabase.from("question_records").select("*").eq("user_id", userId);
       console.log("질문 기록 data:", data);
       console.log("질문 기록 error:", error);
     }
     fetchQuestionRecords();
-  }, []);
+  }, [userId]);
 
   // 페이지 로드 시 Supabase에서 데이터 가져오기
   useEffect(() => {
     async function loadData() {
-      // 일정 데이터 로드
+      // 일정 데이터 로드 (개인별 분리)
       const { data: schedulesData, error: schedulesError } = await supabase
         .from('schedules')
         .select('*')
+        .eq('user_id', userId)
         .order('date', { ascending: true });
       
       if (schedulesError) {
@@ -450,10 +457,11 @@ const isValidEmail = (email: string) => email.includes('@');
         setSchedules(schedulesData || []);
       }
       
-      // 가족 사진 데이터 로드
+      // 가족 사진 데이터 로드 (개인별 분리)
       const { data: photosData, error: photosError } = await supabase
         .from('family_photos')
-        .select('*');
+        .select('*')
+        .eq('user_id', userId);
       
       if (photosError) {
         console.error('사진 로드 실패:', photosError);
@@ -469,7 +477,7 @@ const isValidEmail = (email: string) => email.includes('@');
     }
     
     loadData();
-  }, []);
+  }, [userId]);
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -482,13 +490,13 @@ const isValidEmail = (email: string) => email.includes('@');
     const uploadedBy = '나'; // 또는 로그인 사용자 이름
     const title = '새로운 사진';
   
-    // ✅ Supabase에 URL만 기록
+    // ✅ Supabase에 URL만 기록 (개인별 분리)
     const { data, error } = await supabase.from('family_photos').insert([
       {
         url: localUrl,         // 가짜 URL
         title,
         uploaded_by: uploadedBy,
-        // member_id: "1234-uuid" ← 로그인 유저 연동 시에만 사용
+        user_id: userId,       // 개인별 분리를 위한 user_id
       }
     ]);
   
@@ -557,13 +565,14 @@ const isValidEmail = (email: string) => email.includes('@');
       parentId: category === 'parent' ? getCurrentParentId() : undefined,
       selectedRole: category === 'parent' ? currentParentRole : undefined
     };
-    // Supabase 저장
+    // Supabase 저장 (개인별 분리)
     await supabase.from('question_records').insert([
       {
         question: questionText,
         answer: answer,
         category: category,
         date: new Date().toISOString(),
+        user_id: userId  // 개인별 분리를 위한 user_id
       }
     ]);
     // 기록에 추가하고, 카운트/진행상황 즉시 반영
@@ -612,12 +621,13 @@ const isValidEmail = (email: string) => email.includes('@');
       type: 'quiz'
     };
     
-    // Supabase에 저장 (unison_quiz_records 테이블) - 에러 처리 추가
+    // Supabase에 저장 (unison_quiz_records 테이블) - 개인별 분리
     const { data, error } = await supabase.from('unison_quiz_records').insert([
       {
         member_id: null, // foreign key constraint 에러 방지
         quiz: currentUnisonQuiz.question,
         answer: extra ? `${answer} - ${extra}` : answer,
+        user_id: userId,  // 개인별 분리를 위한 user_id
         // answered_at은 자동으로 설정됨
       }
     ]);
@@ -746,7 +756,7 @@ const isValidEmail = (email: string) => email.includes('@');
   const handleFeedbackSubmit = async () => {
     if (feedbackText.trim()) {
         const {data, error} = await supabase.from("feedbacks").insert([
-          {content: feedbackText}
+          {content: feedbackText, user_id: userId}
         ])
         if (error) {
           alert("피드백 저장 실패: " + error.message);
@@ -762,7 +772,7 @@ const isValidEmail = (email: string) => email.includes('@');
     const contact = notificationType === 'email' ? notificationEmail : notificationPhone;
     if (contact.trim()) {
       const {data, error} = await supabase.from("notifications").insert([
-        {type: notificationType , value: contact}
+        {type: notificationType , value: contact, user_id: userId}
       ])
       if (error) {
         alert("피드백 저장 실패: " + error.message);
@@ -1239,13 +1249,14 @@ const isValidEmail = (email: string) => email.includes('@');
           description: newSchedule.description
         };
 
-        // Supabase에 저장
+        // Supabase에 저장 (개인별 분리)
         const { data, error } = await supabase.from('schedules').insert([
           {
             title: schedule.title,
             date: schedule.date,
             time: schedule.time,
-            description: schedule.description
+            description: schedule.description,
+            user_id: userId  // 개인별 분리를 위한 user_id
           }
         ]);
 
