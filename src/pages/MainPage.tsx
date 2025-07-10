@@ -240,7 +240,7 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
   // 현재 질문의 등록 상태
   const [isCurrentQuestionRegistered, setIsCurrentQuestionRegistered] = useState(false);
   
-  // 일정 상태 관리
+  // 일정 상태 관리 - Supabase에서 로드
   const [schedules, setSchedules] = useState<Array<{
     id: string;
     title: string;
@@ -292,7 +292,7 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
   const [joinCode, setJoinCode] = useState<string>('');
   const [showFamilyAddModal, setShowFamilyAddModal] = useState(false);
   
-  // 가족 갤러리 상태
+  // 가족 갤러리 상태 - Supabase에서 로드
   const [familyPhotos, setFamilyPhotos] = useState<Array<{
     id: string;
     url: string;
@@ -435,6 +435,42 @@ const isValidEmail = (email: string) => email.includes('@');
     fetchQuestionRecords();
   }, []);
 
+  // 페이지 로드 시 Supabase에서 데이터 가져오기
+  useEffect(() => {
+    async function loadData() {
+      // 일정 데이터 로드
+      const { data: schedulesData, error: schedulesError } = await supabase
+        .from('schedules')
+        .select('*')
+        .order('date', { ascending: true });
+      
+      if (schedulesError) {
+        console.error('일정 로드 실패:', schedulesError);
+      } else {
+        setSchedules(schedulesData || []);
+      }
+      
+      // 가족 사진 데이터 로드
+      const { data: photosData, error: photosError } = await supabase
+        .from('family_photos')
+        .select('*');
+      
+      if (photosError) {
+        console.error('사진 로드 실패:', photosError);
+      } else {
+        setFamilyPhotos(photosData?.map(photo => ({
+          id: photo.id,
+          url: photo.url,
+          title: photo.title || '가족 사진',
+          date: photo.created_at ? new Date(photo.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          uploadedBy: photo.uploaded_by || '나'
+        })) || []);
+      }
+    }
+    
+    loadData();
+  }, []);
+
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -463,7 +499,7 @@ const isValidEmail = (email: string) => email.includes('@');
   
     alert("사진 기록 저장 성공! (이미지는 로컬에서만 보여요)");
   
-    // 화면에 반영 (UI)
+    // 화면에 반영 (UI) - Supabase에서 가져온 데이터로 업데이트
     const newPhoto = {
       id: uuidv4(),
       url: localUrl,
@@ -567,35 +603,39 @@ const isValidEmail = (email: string) => email.includes('@');
   };
 
   const handleQuizRegister = async (answer: string, extra: string) => {
-    const fullAnswer = extra ? `${answer} - ${extra}` : answer;
-  
-    const { error } = await supabase.from('unison_quiz_records').insert([
-      {
-        quiz: currentUnisonQuiz.question,
-        answer: fullAnswer,
-        answered_at: new Date().toISOString(), // 서버 시간 안 쓰려면 이렇게 명시 가능
-        member_id: getCurrentParentId() || null
-      }
-    ]);
-  
-    if (error) {
-      alert('이구동성 퀴즈 저장 실패: ' + error.message);
-      return;
-    }
-  
-    // local 기록에도 저장하고 다음 퀴즈로 넘기기
     const newRecord: QuestionRecord = {
       id: uuidv4(),
       question: currentUnisonQuiz.question,
-      answer: fullAnswer,
+      answer: extra ? `${answer} - ${extra}` : answer,
       category: 'parent',
       date: new Date().toISOString().split('T')[0],
       type: 'quiz'
     };
-    setQuestionRecords(prev => [newRecord, ...prev]);
-    setTimeout(() => {
+    
+    // Supabase에 저장 (unison_quiz_records 테이블) - 에러 처리 추가
+    const { data, error } = await supabase.from('unison_quiz_records').insert([
+      {
+        member_id: null, // foreign key constraint 에러 방지
+        quiz: currentUnisonQuiz.question,
+        answer: extra ? `${answer} - ${extra}` : answer,
+        // answered_at은 자동으로 설정됨
+      }
+    ]);
+    
+    if (error) {
+      console.error('이구동성 퀴즈 저장 실패:', error);
+      alert('이구동성 퀴즈 저장 실패: ' + error.message);
+      return;
+    }
+    
+    console.log('이구동성 퀴즈 저장 성공:', data);
+    
+    setQuestionRecords(prev => {
+      const newRecords = [newRecord, ...prev];
+      // 등록 후 바로 다음 퀴즈로 이동
       handleRandomUnisonQuiz();
-    }, 0);
+      return newRecords;
+    });
   };
 
   const handleRandomUnisonQuiz = () => {
@@ -1199,8 +1239,22 @@ const isValidEmail = (email: string) => email.includes('@');
           description: newSchedule.description
         };
 
-        await addSchedule(schedule);
-        
+        // Supabase에 저장
+        const { data, error } = await supabase.from('schedules').insert([
+          {
+            title: schedule.title,
+            date: schedule.date,
+            time: schedule.time,
+            description: schedule.description
+          }
+        ]);
+
+        if (error) {
+          alert('일정 저장 실패: ' + error.message);
+          return;
+        }
+
+        // 성공 시 화면에 반영
         setSchedules(prev => [...prev, schedule]);
         setNewSchedule({ title: '', date: '', time: '', description: '' });
         setShowAddModal(false);
