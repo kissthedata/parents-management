@@ -40,7 +40,7 @@ export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuest
     onRegister(answer);
 
     window.dataLayer?.push({
-      event: 'answer_question',
+      event: 'daily_answer_question',
       selected_answer: answer
     })
 
