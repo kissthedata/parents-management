@@ -6,6 +6,13 @@ import clsx from 'clsx';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { supabase } from "../lib/supabaseClient";
 
+declare global {
+  interface Window {
+    dataLayer: Record<string, any>[];    
+  }
+}
+
+
 interface DailyQuestionCardProps {
   question: string;
   onRegister: (answer: string) => void;
@@ -31,6 +38,12 @@ export function DailyQuestionCard({ question, onRegister, onShare, onRandomQuest
     e.stopPropagation();
     if (!answer) return;
     onRegister(answer);
+
+    window.dataLayer?.push({
+      event: 'answer_question',
+      selected_answer: answer
+    })
+
     setAnswer(''); // 입력값 초기화
   };
 

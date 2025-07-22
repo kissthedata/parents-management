@@ -36,7 +36,7 @@ export function UnisonQuizCard({ question, options, onRegister, onShare, onViewR
     onRegister(selected, extra);
 
     window.dataLayer?.push({
-      event: 'answer_question',
+      event: 'unison_answer_question',
       selected_answer: selected,
       extra_comment: extra
     });
