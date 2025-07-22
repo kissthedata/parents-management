@@ -4,6 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Share2, Send, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 
+declare global {
+  interface Window {
+    dataLayer: Record<string, any>[];
+  }
+}
+
+
 interface UnisonQuizCardProps {
   question: string;
   options: string[];
@@ -27,6 +34,12 @@ export function UnisonQuizCard({ question, options, onRegister, onShare, onViewR
   const handleRegister = () => {
     if (!selected) return;
     onRegister(selected, extra);
+
+    window.dataLayer?.push({
+      event: 'answer_question',
+      selected_answer: selected,
+      extra_comment: extra
+    });
     setSelected('');
     setExtra('');
   };
