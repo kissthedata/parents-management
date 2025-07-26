@@ -18,7 +18,8 @@ import {
   BookOpen,
   Phone,
   Gift,
-  MessageCircle
+  MessageCircle,
+  History
 } from "lucide-react";
 import { HeaderSection } from "@/components/HeaderSection";
 import { CategoryTabs } from "@/components/CategoryTabs";
@@ -29,7 +30,7 @@ import { PrivacyConsentModal } from "@/components/PrivacyConsentModal";
 import { supabase } from "../lib/supabaseClient";
 import { v4 as uuidv4} from 'uuid';
 
-type TabType = 'home' | 'question' | 'calendar' | 'family' | 'settings';
+type TabType = 'home' | 'question' | 'calendar' | 'history' | 'settings';
 
 interface MainPageProps {
   onStartQuestions: () => void;
@@ -180,13 +181,19 @@ export function MainPage({ onStartQuestions, onQuestionResults }: MainPageProps)
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [category, setCategory] = useState<'parent' | 'family'>('parent');
   const [quizShared, setQuizShared] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<'all' | 'parent' | 'family' | 'quiz' | 'dont_know'>('all');
   // 잘잇지 앱 소개 모달 상태
   const [showAppIntroModal, setShowAppIntroModal] = useState(false);
   
   // 질문 기록 상태
   const [questionRecords, setQuestionRecords] = useState<QuestionRecord[]>(() => {
-    const saved = localStorage.getItem('questionRecords');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('questionRecords');
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error("Failed to parse questionRecords from localStorage", error);
+      return []; // 파싱 실패 시 빈 배열 반환
+    }
   });
   
   // 현재 이구동성 퀴즈 상태 (랜덤 초기화)
@@ -740,9 +747,6 @@ const isValidEmail = (email: string) => email.includes('@');
     }));
     
     setQuestionRecords(prev => [...newRecords, ...prev]);
-    
-    // 질문 탭으로 자동 이동
-    setActiveTab('question');
   };
 
   // onQuestionResults가 변경될 때마다 결과 처리
@@ -826,7 +830,7 @@ const isValidEmail = (email: string) => email.includes('@');
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed">
           데일리 카드로 부모님에 대해 더 깊이 알아보고,<br />
-          지난 추억 기록해보기
+          추억을 기록해보세요.
         </p>
       </div>
 
@@ -929,7 +933,7 @@ const isValidEmail = (email: string) => email.includes('@');
               <div 
                 className="w-20 h-20 bg-gradient-to-br from-accent/20 to-secondary/20 rounded-full flex items-center justify-center text-lg font-bold text-accent mb-2 shadow-lg border-2 border-accent/30 cursor-pointer hover:scale-105 transition-transform"
                 onClick={() => {
-                  navigate(`/parent/${member.id}`);
+                  navigate(`/parent/${member.id}/report`);
                 }}
               >
                 {member.avatar ? (
@@ -1155,52 +1159,6 @@ const isValidEmail = (email: string) => email.includes('@');
         onRandomQuestion={handleRandomUnisonQuiz}
         shared={quizShared}
       />
-      
-      {/* 답변 기록 섹션 */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground">나의 답변 기록</h3>
-        {questionRecords.map((record) => (
-          <motion.div
-            key={record.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card className="shadow-card border-accent/10">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <span role="img" aria-label={record.type === 'daily' ? 'daily' : 'quiz'}>
-                    {record.type === 'daily' ? '🔮' : '🎲'}
-                  </span>
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                    {record.date}
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">질문</p>
-                    <p className="text-foreground font-medium text-sm leading-relaxed">{record.question}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">답변</p>
-                    <p className="text-foreground text-sm leading-relaxed bg-muted/30 p-3 rounded-lg">{record.answer}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-        
-        {questionRecords.length === 0 && (
-          <Card className="border-dashed border-muted-foreground/20">
-            <CardContent className="py-12 text-center">
-              <div className="text-4xl mb-4">💭</div>
-              <p className="text-muted-foreground mb-2">아직 답변한 질문이 없어요</p>
-              <p className="text-sm text-muted-foreground">함께 대화해보세요!</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
     </div>
   );
 
@@ -1564,183 +1522,111 @@ const isValidEmail = (email: string) => email.includes('@');
     );
   };
 
-  const renderFamilyTab = () => {
-    const handleJoinFamily = () => {
-      if (joinCode.length === 6) {
-        // 실제로는 서버에서 코드 검증
-        const newMember: FamilyMember = {
-          id: uuidv4(),
-          name: '새로운 멤버',
-          role: 'child',
-          joinDate: new Date().toISOString().split('T')[0]
-        };
-        setFamilyMembers(prev => [...prev, newMember]);
-        setJoinCode('');
-        setShowJoinModal(false);
+  const groupedRecords = useMemo(() => {
+    const filteredRecords = questionRecords.filter(record => {
+      if (historyFilter === 'all') return true;
+      if (historyFilter === 'dont_know') return record.answer === '잘 모르겠어요';
+      if (historyFilter === 'quiz') return record.type === 'quiz';
+      return record.type === 'daily' && record.category === historyFilter;
+    });
+
+    return filteredRecords.reduce((acc, record) => {
+      const date = record.date;
+      if (!acc[date]) {
+        acc[date] = [];
       }
-    };
+      acc[date].push(record);
+      return acc;
+    }, {} as Record<string, QuestionRecord[]>);
+  }, [questionRecords, historyFilter]);
 
-    const copyFamilyCode = async () => {
-      try {
-        await navigator.clipboard.writeText(familyCode);
-      } catch (err) {
-        // 복사 실패 시 조용히 처리
-      }
-    };
+  const sortedDates = useMemo(() => {
+    return Object.keys(groupedRecords).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+  }, [groupedRecords]);
 
-    const handleMemberClick = (member: FamilyMember) => {
-      navigate(`/parent/${member.id}`);
-    };
-
-    const handlePhotoClick = (photo: any) => {
-      setSelectedGalleryPhoto(photo);
-      setShowPhotoModal(true);
-    };
+  const renderHistoryTab = () => {
+    const filterCategories = [
+      { key: 'all', label: '전체' },
+      { key: 'parent', label: '부모님' },
+      { key: 'family', label: '가족' },
+      { key: 'quiz', label: '이구동성퀴즈' },
+      { key: 'dont_know', label: '잘 모르겠어요' },
+    ];
 
     return (
       <div className="space-y-6">
-        {/* 헤더 */}
         <div className="text-center py-6">
-          <h1 className="text-2xl font-bold text-foreground mb-2">우리 가족</h1>
-          <p className="text-muted-foreground">소중한 가족과 함께 성장해요</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">나의 답변 이력</h1>
+          <p className="text-muted-foreground">차곡차곡 쌓이는 우리의 이야기</p>
         </div>
 
-        {/* 가족 관리 버튼 */}
-        <div className="flex justify-end mb-2 pr-2">
-          <Button variant="outline" size="sm" onClick={() => setShowFamilyManageModal(true)}>
-            가족 관리 &gt;
-          </Button>
+        <div className="flex justify-center gap-2 my-4">
+          {filterCategories.map(cat => (
+            <button
+              key={cat.key}
+              className={`px-4 py-2 rounded-full font-medium transition-colors text-sm ${
+                historyFilter === cat.key ? 'bg-primary text-white shadow-glow' : 'bg-muted text-muted-foreground hover:bg-accent/30'}`}
+              onClick={() => setHistoryFilter(cat.key as any)}
+            >
+              {cat.label}
+            </button>
+          ))}
         </div>
 
-        {/* 가족 멤버 (작은 원형) */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">가족 멤버</h2>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {familyMembers.map((member) => (
-              <div
-                key={member.id}
-                className="flex flex-col items-center cursor-pointer"
-                onClick={() => handleMemberClick(member)}
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-accent/20 to-secondary/20 rounded-full flex items-center justify-center text-sm font-bold text-accent mb-1 shadow-md border border-accent/30">
-                  {member.avatar ? (
-                    <img 
-                      src={member.avatar}
-                      alt={member.name}
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  ) : (
-                    <span>{member.name.charAt(0)}</span>
-                  )}
-                </div>
-                <span className="text-xs text-foreground">{member.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 가족 갤러리 */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">가족 갤러리</h2>
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                className="hidden"
-              />
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors">
-                <Upload className="h-4 w-4 text-primary" />
-              </div>
-            </label>
-          </div>
-          
-          {familyPhotos.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3">
-              {familyPhotos.map((photo) => (
-                <motion.div
-                  key={photo.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card 
-                    className="shadow-card border-accent/10 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-[1.02] overflow-hidden"
-                    onClick={() => handlePhotoClick(photo)}
+        {questionRecords.length === 0 ? (
+          <Card className="border-dashed border-muted-foreground/20">
+            <CardContent className="py-12 text-center">
+              <div className="text-4xl mb-4">🤔</div>
+              <p className="text-muted-foreground mb-2">아직 기록된 답변이 없어요.</p>
+              <p className="text-sm text-muted-foreground">
+                <Button variant="link" onClick={() => setActiveTab('question')} className="p-0 h-auto">
+                  질문 탭
+                </Button>
+                에서 오늘의 질문에 답해보세요!
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          sortedDates.map(date => (
+            <div key={date}>
+              <h2 className="font-semibold text-lg text-foreground mb-3">{new Date(date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}</h2>
+              <div className="space-y-4">
+                {groupedRecords[date].map(record => (
+                  <motion.div
+                    key={record.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
                   >
-                    <div className="aspect-square bg-muted relative">
-                      <img
-                        src={photo.url}
-                        alt={photo.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                        <h3 className="text-white text-sm font-medium">{photo.title}</h3>
-                        <p className="text-white/80 text-xs">{photo.date}</p>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <Card className="shadow-card border-dashed border-muted-foreground/20">
-              <CardContent className="py-12 text-center">
-                <div className="text-4xl mb-4">📸</div>
-                <p className="text-muted-foreground mb-2">아직 가족 사진이 없어요</p>
-                <p className="text-sm text-muted-foreground">소중한 추억을 공유해보세요!</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* 가족 구성원 삭제 모달 */}
-        {showFamilyManageModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-sm bg-white rounded-xl shadow-xl p-6">
-              <h2 className="text-xl font-bold mb-4">가족 구성원 삭제</h2>
-              <p className="mb-4 text-sm text-muted-foreground">삭제할 가족 구성원을 선택하세요.</p>
-              <div className="space-y-2 mb-6">
-                {familyMembers.filter(m => m.role !== 'child').map(member => (
-                  <div key={member.id} className="flex items-center justify-between bg-muted rounded-lg px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      {member.avatar ? (
-                        <img src={member.avatar} alt={member.name} className="w-8 h-8 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center font-bold text-accent-foreground">{member.name.charAt(0)}</div>
-                      )}
-                      <span className="font-medium">{member.name}</span>
-                    </div>
-                    <Button variant="destructive" size="sm" onClick={() => setMemberToDelete(member)}>
-                      삭제
-                    </Button>
-                  </div>
+                    <Card className="shadow-card border-accent/10">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span role="img" aria-label={record.type === 'daily' ? 'daily' : 'quiz'}>
+                            {record.type === 'daily' ? '🔮' : '🎲'}
+                          </span>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            record.type === 'quiz' ? 'bg-accent/10 text-accent' : 
+                            record.category === 'parent' ? 'bg-primary/10 text-primary' : 'bg-primary/10 text-primary'}`}>
+                            {record.type === 'quiz' ? '이구동성퀴즈' : record.category === 'parent' ? '부모님' : '가족'}
+                          </span>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">질문</p>
+                            <p className="text-foreground font-medium text-sm leading-relaxed">{record.question}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">답변</p>
+                            <p className="text-foreground text-sm leading-relaxed bg-muted/30 p-3 rounded-lg">{record.answer}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
-                {familyMembers.filter(m => m.role !== 'child').length === 0 && (
-                  <div className="text-center text-muted-foreground py-4">삭제할 가족이 없습니다.</div>
-                )}
-              </div>
-              <Button variant="outline" className="w-full" onClick={() => setShowFamilyManageModal(false)}>
-                닫기
-              </Button>
-            </div>
-          </div>
-        )}
-        {/* 삭제 확인 모달 */}
-        {memberToDelete && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-xs bg-white rounded-xl shadow-xl p-6">
-              <h2 className="text-lg font-bold mb-4">정말 삭제할까요?</h2>
-              <p className="mb-4 text-sm text-muted-foreground">{memberToDelete.name}님을 가족에서 삭제하시겠어요?</p>
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setMemberToDelete(null)}>취소</Button>
-                <Button variant="destructive" className="flex-1" onClick={() => handleDeleteMember(memberToDelete.id)}>삭제</Button>
               </div>
             </div>
-          </div>
+          ))
         )}
       </div>
     );
@@ -1946,7 +1832,7 @@ const isValidEmail = (email: string) => email.includes('@');
     { id: 'home', label: '홈', icon: Home },
     { id: 'question', label: '질문', icon: BookOpen },
     { id: 'calendar', label: '일정', icon: Calendar },
-    { id: 'family', label: '가족', icon: Users },
+    { id: 'history', label: '답변 이력', icon: History },
     { id: 'settings', label: '더보기', icon: Settings },
   ];
 
@@ -1958,8 +1844,8 @@ const isValidEmail = (email: string) => email.includes('@');
         return renderQuestionTab();
       case 'calendar':
         return renderCalendarTab();
-      case 'family':
-        return renderFamilyTab();
+      case 'history':
+        return renderHistoryTab();
       case 'settings':
         return renderSettingsTab();
       default:

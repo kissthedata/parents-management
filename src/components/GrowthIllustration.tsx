@@ -186,7 +186,7 @@ export function GrowthIllustration({ chapter, onContinue, role, showChapter2Guid
             className="text-base text-primary font-semibold mt-6"
           >
             {role === 'parent'
-              ? '이제 자녀분에 대해 알아볼까요?'
+              ? '좋아요! 부모님에 대해서도 잘 아나요?'
               : '이제, 부모님에 대해 알아볼까요?'}
           </motion.p>
         )}

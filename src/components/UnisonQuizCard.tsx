@@ -108,7 +108,7 @@ export function UnisonQuizCard({ question, options, onRegister, onShare, onViewR
           </div>
           <div className="flex gap-2 mb-2">
             <Button variant="outline" onClick={() => setShareModalOpen(true)} className="flex-1 flex items-center gap-2">
-              공유?<Share2 className="h-4 w-4" />
+              공유하기<Share2 className="h-4 w-4" />
             </Button>
           </div>
         </CardContent>

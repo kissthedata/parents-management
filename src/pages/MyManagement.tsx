@@ -46,19 +46,40 @@ export function MyManagement() {
   const [showHistory, setShowHistory] = useState(false);
   const [myAnswers, setMyAnswers] = useState<any[]>([]);
   
-  // 빈 데이터로 시작
   const [myData, setMyData] = useState<MyData>({
     id: 'me',
     name: '나',
-    lastRecordDate: '',
-    recentQuestion: '',
-    recentAnswer: '',
-    pendingQuestions: 0,
-    totalQuestions: 0,
+    lastRecordDate: '기록 없음',
+    recentQuestion: '아직 답변이 없어요',
+    recentAnswer: '오늘의 질문에 답변해보세요!',
+    pendingQuestions: 10,
+    totalQuestions: 10,
     completedQuestions: 0,
     progressPercentage: 0,
     avatar: undefined
   });
+
+  useEffect(() => {
+    const questionRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]');
+    if (questionRecords.length > 0) {
+      const sortedRecords = [...questionRecords].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const lastRecord = sortedRecords[0];
+      const today = new Date().toISOString().split('T')[0];
+      const todayAnsweredCount = questionRecords.filter(r => r.date === today).length;
+      const totalQuestionsToday = 10; // 하루 총 질문 개수
+
+      setMyData(prev => ({
+        ...prev,
+        lastRecordDate: new Date(lastRecord.date).toLocaleDateString('ko-KR'),
+        recentQuestion: lastRecord.question,
+        recentAnswer: lastRecord.answer,
+        completedQuestions: todayAnsweredCount,
+        pendingQuestions: totalQuestionsToday - todayAnsweredCount,
+        totalQuestions: totalQuestionsToday,
+        progressPercentage: (todayAnsweredCount / totalQuestionsToday) * 100,
+      }));
+    }
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();

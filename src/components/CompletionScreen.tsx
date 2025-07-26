@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Heart, Star, Download, Share2, ArrowRight } from "lucide-react";
+import { Trophy, Heart, Star, ArrowRight, FileText } from "lucide-react"; // FileText 아이콘 추가
+import { useNavigate } from "react-router-dom"; // useNavigate 훅 추가
+import { useEffect, useState } from "react"; // useEffect, useState 훅 추가
 
 interface CompletionScreenProps {
   answers: Record<number, string>;
@@ -9,7 +11,22 @@ interface CompletionScreenProps {
   onGoToMain: () => void;
 }
 
+// QuestionRecord 타입 정의 (MainPage.tsx와 동일하게)
+interface QuestionRecord {
+  id: string;
+  question: string;
+  answer: string;
+  category: 'parent' | 'family';
+  date: string;
+  type: 'daily' | 'quiz';
+  parentId?: string;
+  selectedRole?: 'mother' | 'father';
+}
+
 export function CompletionScreen({ answers, onRestart, onGoToMain }: CompletionScreenProps) {
+  const navigate = useNavigate();
+  const [targetParentId, setTargetParentId] = useState<string | undefined>(undefined);
+
   const totalAnswers = Object.keys(answers).length;
   
   // 답변률 계산: "기억이 안나요"와 "잘 모르겠어요" 제외
@@ -18,6 +35,31 @@ export function CompletionScreen({ answers, onRestart, onGoToMain }: CompletionS
   ).length;
   
   const answerRate = Math.round((validAnswers / 15) * 100);
+
+  useEffect(() => {
+    try {
+      const savedRecords = JSON.parse(localStorage.getItem('questionRecords') || '[]') as QuestionRecord[];
+      // 가장 최근에 답변된 부모님 일상 질문의 parentId를 찾습니다.
+      const lastParentDailyQuestion = savedRecords.find(record => 
+        record.type === 'daily' && record.category === 'parent' && record.parentId
+      );
+      if (lastParentDailyQuestion) {
+        setTargetParentId(lastParentDailyQuestion.parentId);
+      }
+    } catch (error) {
+      console.error("Failed to parse questionRecords from localStorage in CompletionScreen", error);
+    }
+  }, []);
+
+  const handleViewReport = () => {
+    if (targetParentId) {
+      navigate(`/parent/${targetParentId}/report`);
+    } else {
+      // parentId를 찾지 못했을 경우 메인 페이지로 이동하거나 에러 메시지 표시
+      alert("리포트를 볼 부모님 정보를 찾을 수 없습니다.");
+      onGoToMain();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-background flex items-center justify-center p-4">
@@ -111,10 +153,10 @@ export function CompletionScreen({ answers, onRestart, onGoToMain }: CompletionS
             🎉 축하합니다! 🎉
           </h1>
           <p className="text-xl text-muted-foreground mb-2">
-            모든 질문을 완료했습니다
+            나는 잘 알지만, 부모님에 대해 잘 모르고 있진 않나요?
           </p>
           <p className="text-lg text-primary font-medium">
-            총 15개 질문에 답했어요!
+            가족과 함께 한 날은 바로 떠오르지 않죠? 잘잇지 앱이 기록 도와줄게요.
           </p>
         </motion.div>
 
@@ -141,6 +183,16 @@ export function CompletionScreen({ answers, onRestart, onGoToMain }: CompletionS
           transition={{ delay: 1.4, duration: 0.4 }}
           className="space-y-3"
         >
+          {targetParentId && (
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full flex items-center justify-center gap-2"
+              onClick={handleViewReport}
+            >
+              <FileText className="h-4 w-4" /> 리포트 보기
+            </Button>
+          )}
           <Button
             variant="gradient"
             size="lg"
@@ -151,8 +203,6 @@ export function CompletionScreen({ answers, onRestart, onGoToMain }: CompletionS
             <ArrowRight className="h-4 w-4" />
           </Button>
         </motion.div>
-
-
       </motion.div>
     </div>
   );

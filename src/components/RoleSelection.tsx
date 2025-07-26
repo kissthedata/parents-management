@@ -1,13 +1,16 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ArrowLeft } from "lucide-react"; // ArrowLeft 아이콘 추가
+import { useNavigate } from "react-router-dom"; // useNavigate 훅 추가
 
 interface RoleSelectionProps {
   onRoleSelect: (role: 'parent' | 'child', code?: string) => void;
 }
 
 export function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
+  const navigate = useNavigate(); // useNavigate 훅 사용
+
   return (
     <div className="min-h-screen bg-gradient-background flex items-center justify-center p-4">
       <motion.div
@@ -47,10 +50,10 @@ export function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
                   <BookOpen className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-2">
-                  준비됐나요!
+                  준비됐나요?
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  먼저, 본인은 어떤 사람인가요?
+                  그럼, 질문 몇 개만 할게요!
                 </p>
               </div>
               
@@ -60,15 +63,15 @@ export function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
                 size="lg"
                 className="w-full"
               >
-                부모님
+                네!
               </Button>
               <Button
-                onClick={() => onRoleSelect('child')}
-                variant="gradient"
+                onClick={() => navigate(-1)} // 뒤로 가기
+                variant="outline"
                 size="lg"
-                className="w-full"
+                className="w-full mt-2"
               >
-                자녀
+                <ArrowLeft className="h-5 w-5 mr-2" /> 뒤로 가기
               </Button>
             </CardContent>
           </Card>

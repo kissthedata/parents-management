@@ -1,4 +1,4 @@
-import { Home, BookOpen, Calendar, Users, Settings } from 'lucide-react';
+import { Home, BookOpen, Calendar, History, Settings } from 'lucide-react';
 
 interface BottomNavBarProps {
   value: string;
@@ -9,7 +9,7 @@ const tabs = [
   { key: 'home', label: '홈', icon: Home },
   { key: 'question', label: '질문', icon: BookOpen },
   { key: 'calendar', label: '캘린더', icon: Calendar },
-  { key: 'family', label: '우리 가족', icon: Users },
+  { key: 'history', label: '답변 이력', icon: History },
   { key: 'settings', label: '더보기', icon: Settings },
 ];
 
