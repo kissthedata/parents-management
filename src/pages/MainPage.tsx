@@ -1160,8 +1160,7 @@ const isValidEmail = (email: string) => email.includes('@');
               <section>
                 <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">주의 <span>⚠️ </span></h3>
                 <p className="leading-relaxed text-[1.05em]">
-                  지금은 MVP(최소 기능 제품)라, 브라우저를 닫고 다시 켜면, 데이터가 사라져요! 어떤 기능을 좋아하는 지, 분석하기 위한 서비스예요.
-                  여러 지표들이 좋게 나온다면, 고도화 된 서비스로 재탄생할거예요!
+                  지금은 MVP(최소 기능 제품)고 로그인 기능이 없어서, 브라우저를 닫고 다시 켜면, 데이터가 사라질 수도 있어요! 
                 </p>
               </section>
               <section>
@@ -1180,8 +1179,8 @@ const isValidEmail = (email: string) => email.includes('@');
                     <div className="text-[0.98em] text-muted-foreground mt-1">생일, 병원, 기념일 등<br/>가족의 중요한 일정을 함께 확인하고 챙겨보세요.</div>
                   </div>
                   <div>
-                    <div className="font-semibold flex items-center gap-2">가족 갤러리 <span>📸</span></div>
-                    <div className="text-[0.98em] text-muted-foreground mt-1">소중한 순간들을 사진으로 남기고,<br/>그 기억에 따뜻한 한 마디를 더해보세요.</div>
+                    <div className="font-semibold flex items-center gap-2">답변 이력 <span>📸</span></div>
+                    <div className="text-[0.98em] text-muted-foreground mt-1">내가 한 답변들,<br/>필터링으로 볼 수 있어요.</div>
                   </div>
                 </div>
               </section>
@@ -1192,13 +1191,13 @@ const isValidEmail = (email: string) => email.includes('@');
                   <li>'오늘의 질문'에 답하며 일상의 대화를 시작해보세요.</li>
                   <li>'이구동성 퀴즈'로 서로를 더 깊이 이해해보세요.</li>
                   <li>'캘린더'로 가족의 일정을 함께 관리해보세요.</li>
-                  <li>'가족 갤러리'에 사진을 올려 추억을 함께 나눠보세요.</li>
+                  <li>'답변 이력'에서 내 답변을 다시 보세요.</li>
                 </ol>
               </section>
               <section>
                 <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">TIP <span>💡</span></h3>
                 <ul className="list-disc pl-5 space-y-2">
-                  <li>답변, 사진, 일정 등 모든 기록은 <b>내 기기</b>에 안전하게 저장돼요.</li>
+                  <li>여러분들의 답변을 기반으로 새로운 서비스를 고안해볼 거예요.</li>
                   <li>앱에 대한 의견은 언제든 ‘더보기' 탭에서 들려주세요.<br/>여러분의 이야기가 더 따뜻한 서비스를 만드는 힘이 됩니다.</li>
                 </ul>
               </section>
