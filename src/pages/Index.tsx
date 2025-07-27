@@ -48,40 +48,35 @@ const Index = ({ onQuestionComplete }: IndexProps) => {
 
   const handleChapterComplete = (chapter: number) => {
     console.log(`Chapter ${chapter} completed!`);
-    setCurrentChapter(chapter);
-    setShowGrowth(true);
+    // 마지막 챕터가 아닐 때만 GrowthIllustration을 보여줍니다.
+    if (chapter < 3) {
+      setCurrentChapter(chapter);
+      setShowGrowth(true);
+    }
   };
 
   const handleGrowthContinue = () => {
     setShowGrowth(false);
-    if (currentChapter >= 3) {
-      setAppState('completed');
-    } else {
-      setCurrentChapter(currentChapter + 1);
-    }
+    setCurrentChapter(currentChapter + 1);
   };
 
   const handleQuestionComplete = () => {
-    if (!showGrowth && currentChapter === 3) {
-      // 모든 질문이 완료되었을 때 결과를 전달
-      const results = Object.entries(userData.answers).map(([questionId, answer]) => {
-        const question = mockQuestions.find(q => q.id === parseInt(questionId));
-        return {
-          question: question?.text || '질문',
-          answer: answer,
-          category: (question?.chapter === 2 ? 'parent' : 'family') as 'parent' | 'family',
-          chapter: question?.chapter || 1
-        };
-      });
-      
-      if (onQuestionComplete) {
-        onQuestionComplete(results);
-      }
-      
-      setAppState('completed');
-    } else if (!showGrowth) {
-      setShowGrowth(true);
+    // 모든 질문이 완료되었을 때 이 함수가 호출되어 완료 화면으로 상태를 변경합니다.
+    const results = Object.entries(userData.answers).map(([questionId, answer]) => {
+      const question = mockQuestions.find(q => q.id === parseInt(questionId));
+      return {
+        question: question?.text || '질문',
+        answer: answer,
+        category: (question?.chapter === 2 ? 'parent' : 'family') as 'parent' | 'family',
+        chapter: question?.chapter || 1
+      };
+    });
+    
+    if (onQuestionComplete) {
+      onQuestionComplete(results);
     }
+    
+    setAppState('completed');
   };
 
   const handleRestart = () => {
@@ -155,7 +150,6 @@ const Index = ({ onQuestionComplete }: IndexProps) => {
           >
             <CompletionScreen
               answers={userData.answers}
-              onRestart={handleRestart}
               onGoToMain={handleGoToMain}
             />
           </motion.div>

@@ -37,25 +37,23 @@ const Index = () => {
 
   const handleChapterComplete = (chapter: number) => {
     console.log(`Chapter ${chapter} completed!`);
-    setCurrentChapter(chapter);
-    setShowGrowth(true);
+    // 마지막 챕터가 아닐 때만 GrowthIllustration을 보여줍니다.
+    if (chapter < 3) {
+      setCurrentChapter(chapter);
+      setShowGrowth(true);
+    }
   };
 
   const handleGrowthContinue = () => {
     setShowGrowth(false);
-    if (currentChapter >= 3) {
-      setAppState('completed');
-    }
+    setCurrentChapter(currentChapter + 1);
   };
 
   const handleQuestionComplete = () => {
-    // 답변 데이터를 localStorage에 저장
+    // 모든 질문이 완료되었을 때 이 함수가 호출되어 완료 화면으로 상태를 변경합니다.
     localStorage.setItem('parentAnswers', JSON.stringify(userData.answers));
     console.log('Answers saved to localStorage:', userData.answers);
-    
-    if (!showGrowth) {
-      setAppState('completed');
-    }
+    setAppState('completed');
   };
 
   const handleRestart = () => {
@@ -128,7 +126,6 @@ const Index = () => {
           >
             <CompletionScreen
               answers={userData.answers}
-              onRestart={handleRestart}
               onGoToMain={handleGoToMain}
             />
           </motion.div>

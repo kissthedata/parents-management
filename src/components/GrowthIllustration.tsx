@@ -26,8 +26,8 @@ const chapterData = {
     bgColor: "bg-emerald-50 dark:bg-emerald-950/20"
   },
   3: {
-    title: "아름다운 꽃이 피었어요! 🌸",
-    subtitle: "꿈과 희망으로 가득한 미래를 그려봤습니다",
+    title: "",
+    subtitle: "",
     icon: Flower,
     gradient: "from-pink-400 to-pink-600",
     bgColor: "bg-pink-50 dark:bg-pink-950/20"
@@ -172,7 +172,7 @@ export function GrowthIllustration({ chapter, onContinue, role, showChapter2Guid
             size="lg"
             className="w-full flex items-center justify-center gap-2"
           >
-            다음 챕터로
+            다음 챕터로 
             <ArrowRight className="h-4 w-4" />
           </Button>
         </motion.div>
@@ -190,16 +190,6 @@ export function GrowthIllustration({ chapter, onContinue, role, showChapter2Guid
               : '이제, 부모님에 대해 알아볼까요?'}
           </motion.p>
         )}
-
-        {/* Achievement text */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.4, duration: 0.4 }}
-          className="text-sm text-muted-foreground mt-4"
-        >
-          챕터 {chapter}/3 완료! ✨
-        </motion.p>
       </motion.div>
     </div>
   );
