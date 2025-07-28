@@ -50,120 +50,75 @@
 | 웹/앱 배포 | vercel |
 
 ---
-## 프로젝트 구조
-parents-management
-├─ public
-│  ├─ favicon.ico
-│  ├─ placeholder.svg
-│  └─ robots.txt
-├─ src
-│  ├─ App.css
-│  ├─ App.tsx
-│  ├─ index.css
-│  ├─ main.tsx
-│  ├─ vite-env.d.ts
-│  ├─ data
-│  │  └─ questions.ts
-│  ├─ hooks
-│  │  ├─ use-mobile.tsx
-│  │  └─ use-toast.ts
-│  ├─ lib
-│  │  ├─ supabaseClient.ts
-│  │  └─ utils.ts
-│  ├─ pages
-│  │  ├─ Album.tsx
-│  │  ├─ Calendar.tsx
-│  │  ├─ Gallery.tsx
-│  │  ├─ Home.tsx
-│  │  ├─ Index.tsx
-│  │  ├─ MainPage.tsx
-│  │  ├─ MyManagement.tsx
-│  │  ├─ NotFound.tsx
-│  │  ├─ Onboarding.tsx
-│  │  ├─ ParentGallery.tsx
-│  │  ├─ ParentManagement.tsx
-│  │  ├─ ParentQuizSharePage.tsx
-│  │  └─ Settings.tsx
-│  └─ components
-│     ├─ BottomNavBar.tsx
-│     ├─ BottomNavigation.tsx
-│     ├─ CategoryTabs.tsx
-│     ├─ CompletionScreen.tsx
-│     ├─ DailyQuestionCard.tsx
-│     ├─ GrowthIllustration.tsx
-│     ├─ HeaderSection.tsx
-│     ├─ PhotoQuiz.tsx
-│     ├─ PrivacyConsentModal.tsx
-│     ├─ QuestionScreen.tsx
-│     ├─ RoleSelection.tsx
-│     ├─ UnisonQuizCard.tsx
-│     └─ ui
-│        ├─ accordion.tsx
-│        ├─ alert-dialog.tsx
-│        ├─ alert.tsx
-│        ├─ aspect-ratio.tsx
-│        ├─ avatar.tsx
-│        ├─ badge.tsx
-│        ├─ breadcrumb.tsx
-│        ├─ button.tsx
-│        ├─ calendar.tsx
-│        ├─ card.tsx
-│        ├─ carousel.tsx
-│        ├─ chart.tsx
-│        ├─ checkbox.tsx
-│        ├─ collapsible.tsx
-│        ├─ command.tsx
-│        ├─ context-menu.tsx
-│        ├─ dialog.tsx
-│        ├─ drawer.tsx
-│        ├─ dropdown-menu.tsx
-│        ├─ form.tsx
-│        ├─ hover-card.tsx
-│        ├─ input-otp.tsx
-│        ├─ input.tsx
-│        ├─ label.tsx
-│        ├─ menubar.tsx
-│        ├─ navigation-menu.tsx
-│        ├─ pagination.tsx
-│        ├─ popover.tsx
-│        ├─ progress.tsx
-│        ├─ radio-group.tsx
-│        ├─ resizable.tsx
-│        ├─ scroll-area.tsx
-│        ├─ select.tsx
-│        ├─ separator.tsx
-│        ├─ sheet.tsx
-│        ├─ sidebar.tsx
-│        ├─ skeleton.tsx
-│        ├─ slider.tsx
-│        ├─ sonner.tsx
-│        ├─ switch.tsx
-│        ├─ table.tsx
-│        ├─ tabs.tsx
-│        ├─ textarea.tsx
-│        ├─ toast.tsx
-│        ├─ toaster.tsx
-│        ├─ toggle-group.tsx
-│        ├─ toggle.tsx
-│        ├─ tooltip.tsx
-│        └─ use-toast.ts
-├─ .env
-├─ bun.lockb
-├─ components.json
-├─ eslint.config.js
-├─ index.html
-├─ netlify.toml
-├─ package-lock.json
-├─ package.json
-├─ postcss.config.js
-├─ README.md
-├─ tailwind.config.ts
-├─ tsconfig.app.json
-├─ tsconfig.json
-├─ tsconfig.node.json
-├─ vercel.json
-└─ vite.config.ts
+## 📁 프로젝트 구조: `parents-management`
 
+```
+parents-management
+├─ 📂 public                  # 정적 파일 폴더 (favicon, robots.txt 등)
+│  ├─ 📄 favicon.ico
+│  ├─ 📄 placeholder.svg
+│  └─ 📄 robots.txt
+│
+├─ 📂 src                     # 주요 소스코드 디렉토리
+│  ├─ 📄 App.tsx / App.css    # 앱 진입점 및 글로벌 스타일
+│  ├─ 📄 main.tsx             # Vite 진입점
+│  ├─ 📂 data                 # 질문 데이터
+│  │  └─ 📄 questions.ts
+│  ├─ 📂 hooks                # 커스텀 훅 모음
+│  │  ├─ 📄 use-mobile.tsx
+│  │  └─ 📄 use-toast.ts
+│  ├─ 📂 lib                  # 외부 라이브러리 설정/유틸
+│  │  ├─ 📄 supabaseClient.ts
+│  │  └─ 📄 utils.ts
+│  ├─ 📂 pages                # 라우팅되는 주요 페이지들
+│  │  ├─ 📄 Album.tsx
+│  │  ├─ 📄 Calendar.tsx
+│  │  ├─ 📄 Gallery.tsx
+│  │  ├─ 📄 Home.tsx
+│  │  ├─ 📄 Index.tsx
+│  │  ├─ 📄 MainPage.tsx
+│  │  ├─ 📄 MyManagement.tsx
+│  │  ├─ 📄 NotFound.tsx
+│  │  ├─ 📄 Onboarding.tsx
+│  │  ├─ 📄 ParentGallery.tsx
+│  │  ├─ 📄 ParentManagement.tsx
+│  │  ├─ 📄 ParentQuizSharePage.tsx
+│  │  └─ 📄 Settings.tsx
+│  └─ 📂 components           # 재사용 UI 및 기능성 컴포넌트
+│     ├─ 📄 BottomNavBar.tsx
+│     ├─ 📄 BottomNavigation.tsx
+│     ├─ 📄 CategoryTabs.tsx
+│     ├─ 📄 CompletionScreen.tsx
+│     ├─ 📄 DailyQuestionCard.tsx
+│     ├─ 📄 GrowthIllustration.tsx
+│     ├─ 📄 HeaderSection.tsx
+│     ├─ 📄 PhotoQuiz.tsx
+│     ├─ 📄 PrivacyConsentModal.tsx
+│     ├─ 📄 QuestionScreen.tsx
+│     ├─ 📄 RoleSelection.tsx
+│     ├─ 📄 UnisonQuizCard.tsx
+│     └─ 📂 ui                # 디자인 시스템 기반 UI 구성 요소
+│        ├─ 📄 accordion.tsx
+│        ├─ 📄 alert.tsx
+│        ├─ 📄 badge.tsx
+│        ├─ 📄 button.tsx
+│        ├─ 📄 calendar.tsx
+│        ├─ 📄 card.tsx
+│        ├─ 📄 chart.tsx
+│        ├─ 📄 dialog.tsx
+│        ├─ 📄 input.tsx
+│        ├─ 📄 toast.tsx
+│        └─ (기타 UI 컴포넌트 다수)
+│
+├─ 📄 README.md               # 프로젝트 설명
+├─ 📄 index.html              # HTML 템플릿
+├─ 📄 package.json            # 패키지 설정
+├─ 📄 vite.config.ts          # Vite 설정
+├─ 📄 tailwind.config.ts      # Tailwind 설정
+├─ 📄 netlify.toml / vercel.json # 배포 설정
+├─ 📄 tsconfig*.json          # TypeScript 설정
+└─ 기타 설정 파일들 (.env, eslint, postcss 등)
+```
 
 ## 🚀 실행 방법
 - 의존성 설치
